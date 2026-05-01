@@ -1,0 +1,77 @@
+# ─── Python ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# ─── uv ───────────────────────────────────────────
+.uv/
+
+# ─── IDE / Editor ────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*~
+.claude/settings.local.json
+
+# ─── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── 嵌入式 / 硬件构建产物 ──────────────────────
+*.elf
+*.bin
+*.hex
+*.uf2
+*.map
+.pio/
+.platformio/
+
+# ─── KiCad 备份 / 锁文件 ─────────────────────────
+*-backups/
+*.kicad_pcb-bak
+*.kicad_sch-bak
+*.lck
+fp-info-cache
+
+# ─── 3D 模型 / 大文件 ──────────────────────────
+*.f3d
+*.f3z
+*.step.bak
+
+# ─── 日志 ─────────────────────────────────────────
+*.log
+logs/
+
+# ─── ML / RL 训练产物 ────────────────────────────
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+runs/
+wandb/
+mlruns/
+checkpoints/
+
+# ─── 本地配置 / 密钥 ─────────────────────────────
+.env
+.env.local
+.env.*.local
+*.local.md
+secrets/
+
+# ─── 数据集（按需放行） ──────────────────────────
+data/raw/
+data/processed/
+*.parquet
+*.h5
