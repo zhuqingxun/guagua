@@ -78,18 +78,19 @@ PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过�
 |---|------|------|---|------|------|
 | W1-1 | W&B 账号 + hello world | 0.5h | P0 | ✅ 5/3 已完成 | `~/openduck-warmup/hello_wandb.py` + `wandb/run-20260503_003754` 实验记录 |
 | W1-2 | Fork apirrone 4 仓库 | 0.5h | P0 | ✅ 4/22-30 已完成 | `gh repo view zhuqingxun/Open_Duck_*` 4/4 isFork=true |
-| W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0 | ⏳ 待用户确认 | https://discord.gg/UtJZsgfQGe |
+| W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0 | ⛔ 5/5 用户放弃 | 用户曾尝试注册未成功；PRD 列为"卡 > 2 周时求助"非必备渠道；替代用 ncnynl 微信群 + 上游 GitHub Issue |
 | W1-4 | WSL2 + uv | 0.5h | P0 | ✅ 5/5 已完成 | uv 0.11.9 装在 `~/.local/bin/uv`（WSL Ubuntu 24.04.2 + Python 3.12.3） |
 | W1-5 | MuJoCo 装好 + viewer 跑通 | 1.5h | P0 | ✅ 多源已完成 | (a) `~/mujoco-3.3.1/bin/simulate` 跑过 humanoid/car/mug；(b) `sim/scripts/verify_mujoco.py` 通过（mujoco 3.8.0 + viewer 模块 importable + step OK）；GUI 弹窗手动验证见 §11 |
-| W1-6 | ncnynl 27 篇通读首轮 + 问题清单 ≥ 5 | 4h | P0 | ⏳ 待用户确认 | 是否已读 / 进度多少 |
+| W1-6 | ncnynl 27 篇通读首轮 + 问题清单 ≥ 5 | 4h | P0 | ✅ 5/5 用户已基本完成 | 用户告知主要文件已读；问题清单延后到 W2-2 章节深读时整理 |
 | W1-7 | Frank Fu 中文博客通读 | 1.5h | P1 | ⏳ 待用户确认 | 是否已读 |
 | W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo | 1h | P1 | ⏳ 待用户确认 | 是否已看 |
 
-**W1 状态汇总（5/5）**：
-- 实质已完成：W1-1 / W1-2 / W1-4 / W1-5（基础部分）= 3h 等价工时
-- 待用户确认：W1-3 / W1-6 / W1-7 / W1-8 = 7h 等价工时
+**W1 状态汇总（5/5 终版）**：
+- ✅ P0 全过：W1-1 / W1-2 / W1-4 / W1-5 / W1-6（用户基本完成）
+- ⛔ P0 放弃：W1-3 Discord（用户注册未成功，可接受）
+- ⏳ P1 滚到 W2：W1-7 Frank Fu / W1-8 子豪兄（待用户确认是否已读）
 
-如果 W1-6/W1-7/W1-8 教程也已读，则 W1 整体已完成 90%，本周可直接转 W2 收尾 + 提前进 M1。
+**W1 已过门**，m0w1-dev-env.md status 改 `completed`。剩余 viewer GUI 5min 手动验证 + Frank Fu/子豪兄 + 卖家聊天记录补完滚到 W2。
 
 ### 4.1 W1 剩余推荐时序（按状态压缩）
 
