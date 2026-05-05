@@ -48,6 +48,35 @@ GitHub **没有独立的 v2 仓库**，v2 是主仓库内部的迭代——不�
 
 底层依赖统一通过 `vendor/` submodule 复用上游。任何"是不是该改硬件参数 / 重写电机控制"的冲动，先确认是否能在上游或应用层解决。
 
+## 接口边界（红线，2026-05-05 锁定）
+
+guagua 应用层与底层 / 上层之间的接口栈是三层：
+
+```
+LLM (System 2) → MCP 工具调用 → [guagua 应用层契约] → Skill Layer (本地 Python) → 7 维 command → RL 50Hz ONNX → 14 ST3215 + 2 SG90
+```
+
+**guagua 的真正交付物 = MCP 工具集 + JSON Schema + 表情关键帧 YAML + 性格 system prompt**——不是调度引擎，不是控制器。
+
+**禁止**（违反就会回到"重新训练 sim2real"地狱）：
+- ❌ 应用层代码直接产 7 维 command 数字
+- ❌ 修改 50Hz RL 控制循环
+- ❌ 修改/重训 ONNX 权重
+- ❌ 在 Pi Zero 2W 上跑 LLM 推理
+
+详情见 memory `project_contracts.md` 和 `docs/openduckmini-knowledge-from-share-2026-05-04.md`。
+
+## System 2 演进路径（不跳级）
+
+System 2 走 4 个子阶段：
+
+- **S0** 跑通整机：装机后直接用爱折腾出厂的 py-xiaozhi → xiaozhi.me 后端，整套不动
+- **S1** 自家优化 v1：替换 MCP 工具集为自家版本（人格 / 表情 / 人文动作风格），后端仍用虾哥
+- **S2** 自家优化 v2：切到自建 xiaozhi-esp32-server + 自家 DeepSeek/Qwen API key
+- **S3+** 本地大脑：Mac Mini 本地 LLM + NeuroMemory 集成
+
+每一步都有可工作版本。**禁止跳过 S0 直接做"自家完整版"**——会陷入装配 + 软件双线调试。详情见 memory `project_strategy.md`。
+
 ## 不要假设的事
 
 - 不要假设已有 `pyproject.toml` / `package.json` / `platformio.ini`——项目还没代码
