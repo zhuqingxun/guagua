@@ -81,28 +81,35 @@ related_files:
   - 重点：Python 环境陷阱章节（与 W1-4/W1-5 验证对照）
   - **验收**：开头到环境章节读完
 
-### 待用户确认：W1-7 Frank Fu / W1-8 子豪兄
+### 教程类（5/5 改非阻塞，按 memory `feedback_doc_reading_not_blocker`）
 
-- [ ] **[P1] W1-7 Frank Fu 中文博客（1.5h）**
+- [x] **[P2 按需] W1-7 Frank Fu 中文博客 ✅ 5/5 用户已读完**
   - 入口：https://frankfu.blog/openai/understanding-reinforcement-learning-through-openduck/
-  - 重点：Python 环境陷阱章节 + reward 设计 + RL 算法章节
-  - **验收**：全文读完 + 至少 3 条 reward 设计相关问题入清单
+  - 用户告知"W2-3 Frank Fu 我已经读完了"（含 reward 设计 + RL 算法章节）
+  - **遇到具体问题时回查**（如 M2 训练 reward 不收敛）
 
-- [ ] **[P1] W1-8 子豪兄 B 站视频 BV1hxZnYfEjo 看完（0.5h）**
+- [ ] **[P2 按需] W1-8 子豪兄 B 站视频 BV1hxZnYfEjo（0.5h）**
   - 入口：https://www.bilibili.com/video/BV1hxZnYfEjo/
-  - 视频时长 ~30min，1.5x 速看完
-  - **验收**：看完，记录与 ncnynl 不一致的点 ≥ 1 条
+  - 心理预期参考，**看不看不阻塞**
+  - 想看时再看（30min, 1.5x 速）
 
-## W1 验收门（5/5 自检）
+## W1 验收门（5/5 最终自检）
 
-- [x] **WSL2 内 MuJoCo 模块 OK**（W1-5 ✅，viewer GUI 待手动确认 ~5min）
-- [x] **W&B 个人 dashboard 有 hello world 曲线**（W1-1 ✅，5/3 完成）
-- [x] **GitHub 个人主页有 4 个 apirrone fork**（W1-2 ✅，4/22-30 完成）
-- [x] **Discord** ⛔ 5/5 用户放弃（W1-3，注册未成功，PRD 列为非必需渠道，不影响进度）
-- [x] **ncnynl 27 篇基本通读**（W1-6 ✅，5/5 用户告知主要文件已读，问题清单延后到 W2-2）
-- [ ] Frank Fu + 子豪兄通读完（W1-7 + W1-8，P1 待用户确认）
+**P0 阻塞门**（全过）：
+- [x] WSL2 内 MuJoCo 模块 OK（W1-5 ✅，viewer GUI 5min 手动确认即可）
+- [x] W&B 个人 dashboard 有 hello world 曲线（W1-1 ✅，5/3 完成）
+- [x] GitHub 个人主页有 4 个 apirrone fork（W1-2 ✅，4/22-30 完成）
 
-**W1 状态汇总（5/5）**：所有 P0 任务已实质完成（含 Discord 用户主动放弃），W1 验收门已过 5/6 项。可直接转 W2。剩余 P1（Frank Fu + 子豪兄）滚到 W2 处理。
+**P2 教程类（不卡阻塞）**：
+- [x] ncnynl 27 篇基本通读（W1-6 ✅）
+- [x] Frank Fu 已读完（W1-7 ✅）
+- [ ] 子豪兄视频随时看（W1-8）
+
+**已废除项**：
+- ⛔ Discord（W1-3，5/5 用户放弃，PRD 列为非必需）
+- ⛔ "ncnynl 问题清单 ≥ 5"硬指标（5/5 移除）
+
+**W1 已过门** ✅，m0w1-dev-env.md status `completed`。剩 viewer GUI 5min 验证滚到 W2。
 
 ## 红线（W1 期间）
 

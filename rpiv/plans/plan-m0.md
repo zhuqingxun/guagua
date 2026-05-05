@@ -78,19 +78,19 @@ PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过�
 |---|------|------|---|------|------|
 | W1-1 | W&B 账号 + hello world | 0.5h | P0 | ✅ 5/3 已完成 | `~/openduck-warmup/hello_wandb.py` + `wandb/run-20260503_003754` 实验记录 |
 | W1-2 | Fork apirrone 4 仓库 | 0.5h | P0 | ✅ 4/22-30 已完成 | `gh repo view zhuqingxun/Open_Duck_*` 4/4 isFork=true |
-| W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0 | ⛔ 5/5 用户放弃 | 用户曾尝试注册未成功；PRD 列为"卡 > 2 周时求助"非必备渠道；替代用 ncnynl 微信群 + 上游 GitHub Issue |
+| W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0→放弃 | ⛔ 5/5 用户放弃 | 用户曾尝试注册未成功；PRD 列为"卡 > 2 周时求助"非必备渠道；替代用 ncnynl 微信群 + 上游 GitHub Issue |
 | W1-4 | WSL2 + uv | 0.5h | P0 | ✅ 5/5 已完成 | uv 0.11.9 装在 `~/.local/bin/uv`（WSL Ubuntu 24.04.2 + Python 3.12.3） |
 | W1-5 | MuJoCo 装好 + viewer 跑通 | 1.5h | P0 | ✅ 多源已完成 | (a) `~/mujoco-3.3.1/bin/simulate` 跑过 humanoid/car/mug；(b) `sim/scripts/verify_mujoco.py` 通过（mujoco 3.8.0 + viewer 模块 importable + step OK）；GUI 弹窗手动验证见 §11 |
-| W1-6 | ncnynl 27 篇通读首轮 + 问题清单 ≥ 5 | 4h | P0 | ✅ 5/5 用户已基本完成 | 用户告知主要文件已读；问题清单延后到 W2-2 章节深读时整理 |
-| W1-7 | Frank Fu 中文博客通读 | 1.5h | P1 | ⏳ 待用户确认 | 是否已读 |
-| W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo | 1h | P1 | ⏳ 待用户确认 | 是否已看 |
+| W1-6 | ncnynl 27 篇 | 4h | **P2 按需** | ✅ 5/5 用户已基本完成 | 用户告知主要文件已读；按 memory `feedback_doc_reading_not_blocker`，"问题清单 ≥ 5 条"硬指标已废除 |
+| W1-7 | Frank Fu 中文博客 | 1.5h | **P2 按需** | ✅ 5/5 用户已读完 | 用户告知 Frank Fu 已读完（含 W2-3 reward 章节）；遇到具体问题时回查 |
+| W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo | 1h | **P2 按需** | ⏳ 非阻塞 | 心理预期参考，看不看不影响 W1 过门 |
 
-**W1 状态汇总（5/5 终版）**：
-- ✅ P0 全过：W1-1 / W1-2 / W1-4 / W1-5 / W1-6（用户基本完成）
-- ⛔ P0 放弃：W1-3 Discord（用户注册未成功，可接受）
-- ⏳ P1 滚到 W2：W1-7 Frank Fu / W1-8 子豪兄（待用户确认是否已读）
+**W1 状态汇总（5/5 最终版，应用「文档不阻塞」原则）**：
+- ✅ P0 全过：W1-1 / W1-2 / W1-4 / W1-5
+- ✅ P2 教程类（按需，不卡阻塞）：W1-6 ncnynl 已基本完成 / W1-7 Frank Fu 已读完 / W1-8 子豪兄随时看
+- ⛔ 放弃：W1-3 Discord（注册未成功，非必备）
 
-**W1 已过门**，m0w1-dev-env.md status 改 `completed`。剩余 viewer GUI 5min 手动验证 + Frank Fu/子豪兄 + 卖家聊天记录补完滚到 W2。
+**W1 已彻底过门**，m0w1-dev-env.md status `completed`。剩余 viewer GUI 5min 手动验证滚到 W2。
 
 ### 4.1 W1 剩余推荐时序（按状态压缩）
 
@@ -110,13 +110,13 @@ PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过�
 | # | 任务 | 工时 | P | 状态 | 验收 / 依据 |
 |---|------|------|---|------|------|
 | W2-1 | `sim/` 子目录 + uv 项目骨架 | 1.5h | P0 | ✅ 5/5 已完成 | 迁移自 ~/openduck-warmup（5 文件），改名 guagua-sim，`uv sync` 通过，`verify_mujoco.py` 通过 |
-| W2-2 | ncnynl 重点章节深读 4 章节 | 3h | P0 | ⏳ 视 W1-6 状态 | 4 章节笔记入 `docs/m0-handoff-notes.md` |
-| W2-3 | Frank Fu reward + RL 章节深读 | 2h | P0 | ⏳ 视 W1-7 状态 | reward 函数公式抄一遍 + 笔记入交付文档 |
+| W2-2 | ncnynl 重点章节深读 | 3h | **P2 按需** | ✅ 已基本完成 | 按 memory `feedback_doc_reading_not_blocker`，不阻塞；M2 训练遇问题时回查具体章节 |
+| W2-3 | Frank Fu reward + RL 章节 | 2h | **P2 按需** | ✅ 用户已读完 | 与 W1-7 同源，已读完；遇 reward 不收敛时回查 |
 | W2-4 | W&B 跑 1 次真训练曲线（PyTorch MNIST 等）| 1h | P1 | ⏳ | dashboard 完整 epoch 曲线（W1-1 是 fake data 100 步，W2-4 要真训练） |
-| W2-5 | 写 `docs/m0-handoff-notes.md` 交付文档 | 2h | P0 | ⏳ | 文件 commit 入 git，含 ≥ 10 条问题 + 上游 README 摘要 |
+| W2-5 | 写 `docs/m0-handoff-notes.md` 交付文档 | 2h | P0 | ⏳ | 文件 commit 入 git；含上游"最小可跑配置"+ Pi 3B+ 改造影响 + M1 起步建议；问题清单移除硬指标，按需收 |
 | W2-6 | M0 复盘 + plan-m1.md 草稿 | 0.5h | P0 | ⏳ | 复盘段 + plan-m1.md commit |
 
-**W2 总工时**：P0 = 9h / P1 = 1h / 合计 10h（其中 W2-1 已完成 1.5h，剩 8.5h）
+**W2 总工时（5/5 修订）**：P0 = 4h（W2-1 已完成 1.5h + W2-5 写交付 2h + W2-6 复盘 0.5h）/ P1 = 1h（W2-4 真训练）/ P2 教程按需不卡（W2-2/W2-3 已基本完成）/ **剩余约 3.5h**
 
 ### 5.1 W2 内部依赖
 
@@ -127,18 +127,21 @@ W2-2, W2-3, W2-1 ──→ W2-5 (交付文档基于全部输入)
 W2-5             ──→ W2-6 (复盘基于交付文档)
 ```
 
-## 6. M0 验收门（W2 末必过）
+## 6. M0 验收门（W2 末必过，5/5 修订移除文档阅读硬指标）
 
-- ✅ WSL2 内 MuJoCo viewer 能弹窗显示默认场景
+**P0 阻塞门**（应用 memory `feedback_doc_reading_not_blocker`）：
+- ✅ WSL2 内 MuJoCo 模块 OK（viewer GUI 弹窗手动验证 5min 即可）
 - ✅ 上游 4 仓库已 fork 到 `zhuqingxun/`
-- ✅ W&B dashboard 至少 1 条曲线
-- ✅ Discord 已加入
-- ✅ ncnynl 27 篇 + Frank Fu + 子豪兄全部通读
-- ✅ `docs/m0-handoff-notes.md` 已 commit，含 ≥ 10 条待验证问题
-- ✅ `sim/` 子目录已建 + uv 项目可 sync
+- ✅ W&B dashboard 至少 1 条曲线（含 W1-1 + W2-4 真训练）
+- ✅ `sim/` 子目录已建 + uv 项目可 sync + verify_mujoco.py 通过
+- ✅ `docs/m0-handoff-notes.md` 已 commit（含上游"最小可跑配置"+ Pi 3B+ 改造影响 + M1 起步建议；问题清单不设硬指标，按需收）
 - ✅ 累计耗时 ≤ 25h（M0 预算 20h + 25% buffer）
 
-任一项不过 → 阶段 A PRD §7.1 M0 决策门处理（最严重情形：止损退出，已沉没成本仅 ≤ 25h + ¥0）。
+**P2 不卡阻塞**（按需，已废除"全部通读"硬指标）：
+- ⛔ Discord 不强求（5/5 用户放弃）
+- 📚 ncnynl / Frank Fu / 子豪兄 = 参考资源，遇问题回查
+
+任一 P0 不过 → 阶段 A PRD §7.1 M0 决策门处理（最严重情形：止损退出，已沉没成本仅 ≤ 25h + ¥0）。
 
 ## 7. 风险与缓解
 
@@ -146,7 +149,7 @@ W2-5             ──→ W2-6 (复盘基于交付文档)
 |------|------|------|------|
 | WSL2 MuJoCo OpenGL 渲染失败（headless 服务器/WSL 老版本）| 中 | 中 | fallback 到 `mujoco.MjData()` + matplotlib 截图，不强求 viewer GUI |
 | `/mnt/d/...` 跨文件系统 IO 慢导致 uv sync 卡 | 低 | 低 | M0 阶段 sync 不频繁；若卡则改 `~/code/guagua-sim/` 临时位置（不影响 W1 验收） |
-| ncnynl 27 篇阅读时间被低估（实际 > 4h） | 高 | 中 | W1 P1 任务（Frank Fu/子豪兄）允许拖到 W2，先保 P0 ncnynl 通读 |
+| ncnynl 27 篇阅读时间被低估 | ⛔ 已消除 | - | 5/5 改非阻塞（memory `feedback_doc_reading_not_blocker`），不再当 P0 看 |
 | MateBook Pro 内存 < 16GB 导致 MuJoCo viewer 卡顿 | 低 | 低 | 默认场景体量小不卡；M2 训练阶段才需要 GPU 加速，M0 不触发 |
 | W&B 在国内访问慢/被墙 | 中 | 低 | 用户已搭科学上网，记录是否需要切 SSL fingerprint；alt: tensorboard 兜底 |
 
