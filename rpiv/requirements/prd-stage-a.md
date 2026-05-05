@@ -1,14 +1,17 @@
 ---
-description: "PRD: 阶段 A - 桌面级双足陪伴机器人 sim2real 复刻与真机行走（5/5 修订主控 Pi 3B+）"
+description: "PRD: 阶段 A - 桌面级双足陪伴机器人 sim2real 复刻与真机行走（M0 5/5 已收尾）"
 status: in-progress
 created_at: 2026-05-02T00:17:41
-updated_at: 2026-05-05T20:00:00
+updated_at: 2026-05-05T22:50:00
 archived_at: null
 related_files:
   - docs/handoff-2026-05-01-kickoff.md
   - docs/robot-thinking-handoff.md
   - docs/openduckmini-knowledge-from-share-2026-05-04.md
+  - docs/seller-chat-aizheteng.md
+  - docs/m0-handoff-notes.md
   - rpiv/plans/plan-m0.md
+  - rpiv/plans/plan-m1.md
   - rpiv/todo/m0w1-dev-env.md
   - rpiv/todo/m0w2-deepread-and-mujoco.md
   - rpiv/todo/m2-purchase-decision.md

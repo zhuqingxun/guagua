@@ -1,15 +1,17 @@
 ---
-title: M0-W2 sim/ 骨架 + 教程深读 + M0 交付文档（10h）
+title: M0-W2 sim/ 骨架 + 教程深读 + M0 交付文档（5/5 完成）
 type: todo
-status: open
+status: completed
 priority: high
 created_at: 2026-05-05T18:00:00
-updated_at: 2026-05-05T18:00:00
+updated_at: 2026-05-05T22:50:00
 milestone: M0-W2
-time_estimate: 10h
+time_estimate: 10h（实际 ~2h，应用「文档不阻塞」+ W2-4 deferred 后剩 P0 = W2-1/W2-5/W2-6 三项）
 related_files:
   - rpiv/plans/plan-m0.md
+  - rpiv/plans/plan-m1.md
   - rpiv/todo/m0w1-dev-env.md
+  - docs/m0-handoff-notes.md
 ---
 
 # M0-W2：sim/ 骨架 + 深读 + 交付（10h）

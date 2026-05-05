@@ -8,3 +8,17 @@ wheels/
 
 # Virtual environments
 .venv
+
+# W&B local cache (实验数据走 dashboard, 本地不入 git)
+wandb/
+
+# MuJoCo viewer 自动生成的运行日志
+MUJOCO_LOG.TXT
+
+# Hydra 默认输出目录 (训练时会用到)
+outputs/
+multirun/
+
+# 检查点 (大文件不入 git)
+checkpoints/
+*.onnx

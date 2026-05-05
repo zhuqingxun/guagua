@@ -1,14 +1,17 @@
 ---
-description: "Plan: M0 仿真工具链 + 教程预读 (W1+W2 共 20h) - 5/5 修订对齐 WSL 已有工作"
-status: in-progress
+description: "Plan: M0 仿真工具链 + 教程预读 (5/5 完成, 实际 ~3h vs 预算 20h)"
+status: completed
 created_at: 2026-05-05T18:00:00
-updated_at: 2026-05-05T19:00:00
+updated_at: 2026-05-05T22:50:00
 archived_at: null
 related_files:
   - rpiv/requirements/prd-stage-a.md
   - rpiv/todo/m0w1-dev-env.md
   - rpiv/todo/m0w2-deepread-and-mujoco.md
+  - rpiv/plans/plan-m1.md
   - docs/openduckmini-knowledge-from-share-2026-05-04.md
+  - docs/m0-handoff-notes.md
+  - docs/seller-chat-aizheteng.md
   - sim/README.md
 ---
 
@@ -80,7 +83,7 @@ PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过�
 | W1-2 | Fork apirrone 4 仓库 | 0.5h | P0 | ✅ 4/22-30 已完成 | `gh repo view zhuqingxun/Open_Duck_*` 4/4 isFork=true |
 | W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0→放弃 | ⛔ 5/5 用户放弃 | 用户曾尝试注册未成功；PRD 列为"卡 > 2 周时求助"非必备渠道；替代用 ncnynl 微信群 + 上游 GitHub Issue |
 | W1-4 | WSL2 + uv | 0.5h | P0 | ✅ 5/5 已完成 | uv 0.11.9 装在 `~/.local/bin/uv`（WSL Ubuntu 24.04.2 + Python 3.12.3） |
-| W1-5 | MuJoCo 装好 + viewer 跑通 | 1.5h | P0 | ✅ 多源已完成 | (a) `~/mujoco-3.3.1/bin/simulate` 跑过 humanoid/car/mug；(b) `sim/scripts/verify_mujoco.py` 通过（mujoco 3.8.0 + viewer 模块 importable + step OK）；GUI 弹窗手动验证见 §11 |
+| W1-5 | MuJoCo 装好 + viewer 跑通 | 1.5h | P0 | ✅ 5/5 完整通过 | (a) `~/mujoco-3.3.1/bin/simulate` 跑过 humanoid/car/mug；(b) `sim/scripts/verify_mujoco.py` 通过；(c) **5/5 22:30 viewer GUI 弹窗验证通过**（WSLg 半启动状态，`wsl --shutdown` 重启后 X11 socket 起来，截图为证）|
 | W1-6 | ncnynl 27 篇 | 4h | **P2 按需** | ✅ 5/5 用户已基本完成 | 用户告知主要文件已读；按 memory `feedback_doc_reading_not_blocker`，"问题清单 ≥ 5 条"硬指标已废除 |
 | W1-7 | Frank Fu 中文博客 | 1.5h | **P2 按需** | ✅ 5/5 用户已读完 | 用户告知 Frank Fu 已读完（含 W2-3 reward 章节）；遇到具体问题时回查 |
 | W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo | 1h | **P2 按需** | ⏳ 非阻塞 | 心理预期参考，看不看不影响 W1 过门 |
@@ -112,7 +115,7 @@ PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过�
 | W2-1 | `sim/` 子目录 + uv 项目骨架 | 1.5h | P0 | ✅ 5/5 已完成 | 迁移自 ~/openduck-warmup（5 文件），改名 guagua-sim，`uv sync` 通过，`verify_mujoco.py` 通过 |
 | W2-2 | ncnynl 重点章节深读 | 3h | **P2 按需** | ✅ 已基本完成 | 按 memory `feedback_doc_reading_not_blocker`，不阻塞；M2 训练遇问题时回查具体章节 |
 | W2-3 | Frank Fu reward + RL 章节 | 2h | **P2 按需** | ✅ 用户已读完 | 与 W1-7 同源，已读完；遇 reward 不收敛时回查 |
-| W2-4 | W&B 跑 1 次真训练曲线（PyTorch MNIST 等）| 1h | P1 | ⏳ | dashboard 完整 epoch 曲线（W1-1 是 fake data 100 步，W2-4 要真训练） |
+| W2-4 | W&B 跑 1 次真训练曲线（PyTorch MNIST 等）| 1h | **P2 deferred** | ⏸️ 推迟到 M2 | W&B 集成已被 W1-1 hello_wandb.py 100 步假数据曲线证明可用；M2 PPO 真训练时自然过门，不在 M0 重复验证 |
 | W2-5 | 写 `docs/m0-handoff-notes.md` 交付文档 | 2h | P0 | ⏳ | 文件 commit 入 git；含上游"最小可跑配置"+ Pi 3B+ 改造影响 + M1 起步建议；问题清单移除硬指标，按需收 |
 | W2-6 | M0 复盘 + plan-m1.md 草稿 | 0.5h | P0 | ⏳ | 复盘段 + plan-m1.md commit |
 
@@ -174,25 +177,32 @@ M1 任务（参考 PRD §M1，第 3-4 周 20h）将基于 M0 输出：
 
 M1 plan 在 W2-6 起草初稿（不要求完成，初稿是为了让 M0 末尾对 M1 心中有数）。
 
-## 10. M0 复盘（W2 末追加）
+## 10. M0 复盘（5/5 W2 完成追加）
 
-> 待 W2 完成后追加：实际工时 vs 预算、最大坑、下周 M1 节奏调整。
+### 10.1 实际工时 vs 预算
+- 预算 20h（W1+W2）；实际 ~3h
+- **节省 17h**，主要来源：用户 4/22-5/3 已有大量预热工作 + 教程类硬指标移除 + W2-4 deferred
 
-## 11. W1-5 viewer GUI 手动验证步骤（用户操作）
+### 10.2 最大坑（按耗时排序）
+1. **未先核查 WSL 已有工作**（违反 multi-system-debugging.md 反模式 1）→ 第一波准备从零装环境，用户 2 次纠正后才扫到 ~/openduck-warmup 等。**已写入 memory project_existing_wsl_work**
+2. **PRD 写作时假设上游 Pi Zero 2W**（5/2 写）→ 5/5 实购发现爱折腾全部离开 Pi Zero 2W（甚至"标准版"PI52G 也是 Pi 5）→ PRD 大改三轮（公开 vs 私下 SKU / 商品 id 1009166204772 vs 946801761316 / 主控影响 sim2real 链路）
+3. **教程通读硬指标**（W1-6 问题清单 ≥ 5 / W2-2 章节深读 P0）违反用户工作偏好 → **已写入 memory feedback_doc_reading_not_blocker**
+4. **WSLg 半启动**（X11 socket 缺失但 DISPLAY 已设）→ 第一时间没识别根因，险些往 GLFW 库出问题方向调；最后 `wsl --shutdown` 修复
 
-`verify_mujoco.py` 验证了 mujoco 模块层 OK，**但 viewer 弹窗 GUI 是否真能在 WSLg 下显示，需要用户手动跑一次确认**：
+### 10.3 给 M1 的节奏调整建议
+- **M1 节奏可放松**：M0 节省 17h 滚 M1，但不强求吃掉，留给 M3+ 硬件期 buffer
+- **M1 不要重复 M0 错**：装新东西前先 `wsl -d Ubuntu -- ls ~/`（项目 memory 已记录）
+- **M1 第一周建议先做参考动作生成器**（依赖 Placo IK，最大风险点）→ 若卡 > 2 周触发求助
+- **M1 期间硬件到货**（5/8-5/10）：可平行开 M3 开箱跑爱折腾出厂 py-xiaozhi → xiaozhi.me（System 2 S0 起点），不阻塞 sim 主线
 
-```bash
-# WSL Ubuntu 内
-cd /mnt/d/CODE/guagua/sim
-uv run python -m mujoco.viewer
-```
+详见 `rpiv/plans/plan-m1.md`。
 
-**预期**：弹出 GLFW 窗口，看到 mujoco 的默认场景（一个 humanoid 或空场景），可用鼠标转视角。
+## 11. W1-5 viewer GUI 手动验证（5/5 ✅ 通过）
 
-**失败排查**：
-- WSLg 不支持：检查 `echo $DISPLAY`（应该是 `:0`）和 `echo $WAYLAND_DISPLAY`（应该是 `wayland-0`）
-- 黑屏 / GLX 错误：试 `LIBGL_ALWAYS_INDIRECT=0 uv run python -m mujoco.viewer`
-- fallback：用 `~/mujoco-3.3.1/bin/simulate ~/my_robot_2/robot.xml` 代替（用户 5/2 已验证可跑），不强求 Python viewer
+5/5 22:30 用户在 WSL 内跑 `cd /mnt/d/CODE/guagua/sim && uv run python -m mujoco.viewer`，首次出现 `X11: Failed to open display :0` GLFW 错误。
 
-确认后回写 W1-5 状态从「✅ 基础部分」升级为「✅ 完整通过」。
+**根因诊断**：WSLg 半启动状态——`/mnt/wslg/` 目录已挂载，`DISPLAY=:0 WAYLAND_DISPLAY=wayland-0` 已设，但 `/tmp/.X11-unix/` 空（无 X0 socket），weston compositor + Xwayland 进程都没起。
+
+**修复**：PowerShell 跑 `wsl --shutdown` → 等 8 秒 → 重新进 WSL → 重跑 viewer 命令 → MuJoCo 3.8.0 GLFW 窗口正常弹出（File / Option / Simulation / History 面板齐全）。
+
+**M0 经验沉淀**：WSLg 偶尔会半启动（DISPLAY/WAYLAND env 设了但 X11 socket 未创建），`wsl --shutdown` 完全重启 WSL VM 是经典修复。详见 `docs/m0-handoff-notes.md` §踩坑。
