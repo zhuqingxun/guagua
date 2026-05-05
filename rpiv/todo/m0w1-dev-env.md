@@ -1,57 +1,65 @@
 ---
 title: M0-W1 开发环境 + 教程通读首轮 + 社区准入（10h）
 type: todo
-status: open
+status: in-progress
 priority: high
 created_at: 2026-05-01
-updated_at: 2026-05-05T18:00:00
+updated_at: 2026-05-05T19:00:00
 milestone: M0-W1
-time_estimate: 10h
+time_estimate: 10h（5/5 修订后剩 ~7h）
 related_files:
   - rpiv/plans/plan-m0.md
   - rpiv/requirements/prd-stage-a.md
+  - sim/README.md
 ---
 
-# M0-W1：环境 + 通读首轮 + 社区（10h）
+# M0-W1：环境 + 通读首轮 + 社区（10h，剩 ~7h）
 
 > 对应 `rpiv/plans/plan-m0.md` §4 W1 任务表。本周完成的具体可勾选清单。
 >
 > P0 = 必做；P1 = 建议本周做，最迟拖到 W2 上半周。
 
+## 5/5 状态修订（重要）
+
+5/5 摸底发现用户在 WSL 早已做过预热（4/22 ~ 5/3）：
+- `~/openduck-warmup/` uv 项目已建 + W&B hello world 已跑
+- `~/mujoco-3.3.1/` 二进制 + simulate viewer 跑过 humanoid 等
+- `~/my_robot_2/` 含 OpenDuck V2 全套 STL + robot.xml
+- GitHub `zhuqingxun/Open_Duck_*` 4 仓库 isFork=true
+- 5/5 装好 uv 0.11.9，迁移 warmup 入 `D:/CODE/guagua/sim/`，`uv sync` 通过
+
+**因此 W1-1/W1-2/W1-4/W1-5 实质已完成**，本周剩余只有教程类（W1-6/W1-7/W1-8）+ Discord（W1-3）+ viewer GUI 手动确认。详情见 plan-m0.md §0。
+
 ## 任务清单（按推荐时序）
 
-### 周一晚（高能量段，2h）— W1-4 + W1-5
+### 5/5 已完成段（无需再做）
 
-- [ ] **[P0] W1-4 WSL2 Ubuntu 24.04 + uv 验证（0.5h）**
-  - WSL2 已在用户 PC 上配好（全局 CLAUDE.md 已注明）
-  - 命令：`wsl -d Ubuntu -- bash -c 'uname -a && cat /etc/os-release | head -3'`
-  - 在 WSL 内装 uv：`curl -LsSf https://astral.sh/uv/install.sh | sh`（已装则跳过）
-  - **验收**：`wsl -d Ubuntu -- bash -c 'uv --version'` 输出版本号
+- [x] **[P0] W1-4 WSL2 Ubuntu 24.04 + uv ✅ 5/5 完成**
+  - WSL Ubuntu 24.04.2 LTS + Python 3.12.3
+  - uv 0.11.9 装在 `~/.local/bin/uv`
+  - 验证：`wsl -d Ubuntu -- bash -c '~/.local/bin/uv --version'` → `uv 0.11.9 (x86_64-unknown-linux-gnu)`
 
-- [ ] **[P0] W1-5 MuJoCo 3.x 装好 + viewer 跑通（1.5h）**
-  - 在 WSL2 内 `cd /mnt/d/CODE/guagua/`（确认能 cd 进去；M0 不在此处建项目，下周 W2-1 才建 sim/）
-  - 临时验证用：`uv run --with mujoco python -c "import mujoco; print(mujoco.__version__)"`
-  - viewer 验证：`uv run --with mujoco python -m mujoco.viewer`（GUI 弹窗能看到默认 humanoid 场景）
-  - WSLg 默认能跑 GUI；若失败按 plan-m0.md §7 风险表 fallback 到 matplotlib 截图模式
-  - **验收**：viewer 弹窗可见 humanoid，能用鼠标转视角
-
-### 周二晚（账号机械操作，1.5h）— W1-1 + W1-2 + W1-3
-
-- [ ] **[P0] W1-1 W&B 个人账号 + hello world（0.5h）**
-  - 注册：https://wandb.ai/authorize
-  - 装 SDK：`uv run --with wandb python -c "import wandb; wandb.init(project='guagua-hello'); wandb.log({'loss': 0.1}); wandb.finish()"`
-  - **验收**：dashboard 能看到 `guagua-hello` project + 1 条 loss 曲线
-
-- [ ] **[P0] W1-2 Fork apirrone 4 仓库到 zhuqingxun（0.5h）**
-  - 用 `gh` CLI 批量 fork（已认证）：
+- [x] **[P0] W1-5 MuJoCo 装好（基础部分）✅ 5/5 完成；viewer GUI 待手动确认**
+  - mujoco 3.8.0 在 `D:/CODE/guagua/sim/.venv` 通过 `uv sync`
+  - `sim/scripts/verify_mujoco.py` 通过（mujoco 模块 + viewer 模块 importable + 模型 step OK）
+  - 早期备用：`~/mujoco-3.3.1/bin/simulate ~/my_robot_2/robot.xml`（5/2 已跑过）
+  - **GUI 弹窗手动验证步骤**（剩余 ~5 分钟）：
     ```bash
-    gh repo fork apirrone/Open_Duck_Mini --clone=false
-    gh repo fork apirrone/Open_Duck_Mini_Runtime --clone=false
-    gh repo fork apirrone/Open_Duck_Playground --clone=false
-    gh repo fork apirrone/Open_Duck_reference_motion_generator --clone=false
+    cd /mnt/d/CODE/guagua/sim && uv run python -m mujoco.viewer
     ```
-  - **验收**：`gh repo list zhuqingxun --limit 10` 看到 4 个 fork
-  - **不 add submodule**：PRD §5.2 锁 M2 决策门后才加
+    预期 GLFW 窗口弹出可见默认场景 + 鼠标可转视角。失败排查见 plan-m0.md §11
+
+- [x] **[P0] W1-1 W&B 账号 + hello world ✅ 5/3 已完成**
+  - openduck-warmup/hello_wandb.py（已迁入 `sim/hello_wandb.py`）
+  - wandb run-20260503_003754 dashboard 有数据
+  - project 名 `guagua-warmup`（保留，不破坏旧 dashboard）
+
+- [x] **[P0] W1-2 Fork apirrone 4 仓库 ✅ 4/22-30 已完成**
+  - GitHub `zhuqingxun/Open_Duck_Mini` `_Runtime` `_Playground` `_reference_motion_generator`
+  - 全部 `isFork: true`（`gh repo view --json isFork` 验证）
+  - 默认分支：Mini/Runtime = **v2**（注意不是 main）；Playground/motion = main
+
+### 待做：周二/三/四/末
 
 - [ ] **[P0] W1-3 加入 Open Duck Mini Discord（0.5h）**
   - https://discord.gg/UtJZsgfQGe
@@ -98,12 +106,12 @@ related_files:
 
 ## W1 验收门（周日晚自检）
 
-- [ ] WSL2 内 MuJoCo viewer 能跑（W1-5 ✅）
-- [ ] W&B 个人 dashboard 有 hello world 曲线（W1-1 ✅）
-- [ ] GitHub 个人主页有 4 个 apirrone fork（W1-2 ✅）
-- [ ] Discord 已加入 + self-intro（W1-3 ✅）
-- [ ] ncnynl 27 篇全通读 + 问题清单 ≥ 5（W1-6 ✅）
-- [ ] Frank Fu + 子豪兄通读完（W1-7 + W1-8，P1 允许拖到 W2 上半周）
+- [x] **WSL2 内 MuJoCo 模块 OK**（W1-5 ✅，viewer GUI 待手动确认 ~5min）
+- [x] **W&B 个人 dashboard 有 hello world 曲线**（W1-1 ✅，5/3 完成）
+- [x] **GitHub 个人主页有 4 个 apirrone fork**（W1-2 ✅，4/22-30 完成）
+- [ ] Discord 已加入 + self-intro（W1-3，待做）
+- [ ] ncnynl 27 篇全通读 + 问题清单 ≥ 5（W1-6，待用户确认进度）
+- [ ] Frank Fu + 子豪兄通读完（W1-7 + W1-8，待用户确认进度）
 
 P0 全过 → todo 状态改 `completed`，进入 W2（`m0w2-deepread-and-mujoco.md`）
 P0 未全过 → 本 todo 保持 `in-progress`，把缺项滚到 W2 同时记录原因

@@ -1,14 +1,15 @@
 ---
-description: "Plan: M0 仿真工具链 + 教程预读 (W1+W2 共 20h)"
+description: "Plan: M0 仿真工具链 + 教程预读 (W1+W2 共 20h) - 5/5 修订对齐 WSL 已有工作"
 status: in-progress
 created_at: 2026-05-05T18:00:00
-updated_at: 2026-05-05T18:00:00
+updated_at: 2026-05-05T19:00:00
 archived_at: null
 related_files:
   - rpiv/requirements/prd-stage-a.md
   - rpiv/todo/m0w1-dev-env.md
   - rpiv/todo/m0w2-deepread-and-mujoco.md
   - docs/openduckmini-knowledge-from-share-2026-05-04.md
+  - sim/README.md
 ---
 
 # M0 Plan：仿真工具链 + 教程预读（20h，W1+W2）
@@ -16,6 +17,23 @@ related_files:
 > 对应 PRD §6 M0 章节。M0 是阶段 A「软件先行」期的第一站，零硬件投入，目标是让 WSL2 上 MuJoCo viewer 跑起来 + 教程心中有数 + 上游 4 仓库 fork 完成。
 >
 > M0 不要求训练任何东西，不要求上游 ONNX 在 MuJoCo 里走起来——那是 M1 的事。
+
+## 0. 与既有工作的衔接（5/5 修订）
+
+PRD 起草时假设从零开始；5/5 摸底发现用户在 WSL 里早已做过预热（4/22 ~ 5/3）：
+
+| 既有 | 内容 | 影响的 plan-m0 任务 |
+|------|------|---------------------|
+| `~/mujoco-3.3.1/` | MuJoCo 原生二进制 + simulate viewer，bash history 跑过 humanoid/car/mug | W1-5 viewer 实质 ✅ |
+| `~/openduck-warmup/` | uv 项目，pyproject 含 mujoco>=3.8.0 + wandb>=0.26.1，hello_wandb.py 已写并跑过实验 | W1-1/W1-5/W2-1 实质 ✅ |
+| `~/my_robot_2/` | OpenDuck Mini V2 全套 STL mesh + robot.xml | M1 加载 V2 URDF 部分 ✅ |
+| `~/my_robot/` | 4/22-25 早期实验，含 robot.urdf + compile 脚本 | 备查 |
+| GitHub `zhuqingxun/Open_Duck_Mini` `_Runtime` `_Playground` `_reference_motion_generator` | 4 仓库全部 isFork=true（默认分支 Mini/Runtime=v2, Playground/motion=main）| W1-2 ✅ |
+| `~/uv` 顶层目录 | 历史装 uv 残留（5/5 重新装为 0.11.9 in `~/.local/bin/uv`） | W1-4 ✅ |
+
+**已完成迁移**：`~/openduck-warmup` 5 个核心文件（pyproject/uv.lock/.python-version/.gitignore/hello_wandb.py）已 cp 入 `D:/CODE/guagua/sim/`，pyproject [project].name 改为 `guagua-sim`，`uv sync` 重建 `.venv` 并验证（mujoco 3.8.0 + wandb 0.26.1）。原目录保留作备份。
+
+**因此**：W1 真正剩余的工作主要是教程通读（W1-6/W1-7/W1-8）+ Discord 加群（W1-3）+ viewer GUI 手动看一眼。
 
 ## 1. M0 总体目标
 
@@ -56,50 +74,48 @@ related_files:
 
 > 优先级：P0 必须本周完成；P1 建议本周完成，最迟拖到 W2 上半周
 
-| # | 任务 | 工时 | P | 验收 |
-|---|------|------|---|------|
-| W1-1 | W&B 个人账号注册 + 任意 hello world script 上传 1 条曲线 | 0.5h | P0 | dashboard 能看到曲线 |
-| W1-2 | Fork apirrone 4 仓库到 `zhuqingxun/` | 0.5h | P0 | GitHub 个人主页 fork 标识可见 |
-| W1-3 | 加入 OpenDuck Mini Discord（https://discord.gg/UtJZsgfQGe）+ self-intro | 0.5h | P0 | Discord 已加入并发送自我介绍 |
-| W1-4 | WSL2 Ubuntu 24.04 验证 + uv 装好（系统级） | 0.5h | P0 | `uv --version` 在 WSL2 中正常 |
-| W1-5 | MuJoCo 3.x 装好 + viewer 跑通默认场景 | 1.5h | P0 | `python -c "import mujoco; mujoco.viewer.launch()"` 弹窗能看到机器人 |
-| W1-6 | ncnynl 27 篇通读首轮（每篇 7-10 min 速览，标记疑问） | 4h | P0 | 全部过完 + 待验证问题清单 ≥ 5 条（手记） |
-| W1-7 | Frank Fu 中文博客通读（重点：Python 环境陷阱章节） | 1.5h | P1 | 1 份要点笔记 + 至少 3 条 reward 设计相关问题入清单 |
-| W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo 看完 | 1h | P1 | 看完，记录与 ncnynl 不一致的点 |
+| # | 任务 | 工时 | P | 状态 | 验收 / 依据 |
+|---|------|------|---|------|------|
+| W1-1 | W&B 账号 + hello world | 0.5h | P0 | ✅ 5/3 已完成 | `~/openduck-warmup/hello_wandb.py` + `wandb/run-20260503_003754` 实验记录 |
+| W1-2 | Fork apirrone 4 仓库 | 0.5h | P0 | ✅ 4/22-30 已完成 | `gh repo view zhuqingxun/Open_Duck_*` 4/4 isFork=true |
+| W1-3 | OpenDuck Mini Discord onboarding + self-intro | 0.5h | P0 | ⏳ 待用户确认 | https://discord.gg/UtJZsgfQGe |
+| W1-4 | WSL2 + uv | 0.5h | P0 | ✅ 5/5 已完成 | uv 0.11.9 装在 `~/.local/bin/uv`（WSL Ubuntu 24.04.2 + Python 3.12.3） |
+| W1-5 | MuJoCo 装好 + viewer 跑通 | 1.5h | P0 | ✅ 多源已完成 | (a) `~/mujoco-3.3.1/bin/simulate` 跑过 humanoid/car/mug；(b) `sim/scripts/verify_mujoco.py` 通过（mujoco 3.8.0 + viewer 模块 importable + step OK）；GUI 弹窗手动验证见 §11 |
+| W1-6 | ncnynl 27 篇通读首轮 + 问题清单 ≥ 5 | 4h | P0 | ⏳ 待用户确认 | 是否已读 / 进度多少 |
+| W1-7 | Frank Fu 中文博客通读 | 1.5h | P1 | ⏳ 待用户确认 | 是否已读 |
+| W1-8 | 子豪兄 B 站视频 BV1hxZnYfEjo | 1h | P1 | ⏳ 待用户确认 | 是否已看 |
 
-**W1 总工时**：P0 = 7.5h / P1 = 2.5h / 合计 10h
+**W1 状态汇总（5/5）**：
+- 实质已完成：W1-1 / W1-2 / W1-4 / W1-5（基础部分）= 3h 等价工时
+- 待用户确认：W1-3 / W1-6 / W1-7 / W1-8 = 7h 等价工时
 
-### 4.1 W1 内部依赖
+如果 W1-6/W1-7/W1-8 教程也已读，则 W1 整体已完成 90%，本周可直接转 W2 收尾 + 提前进 M1。
 
-```
-W1-4 (WSL2/uv) ──→ W1-5 (MuJoCo)
-W1-1, W1-2, W1-3, W1-6, W1-7, W1-8  (相互独立)
-```
+### 4.1 W1 剩余推荐时序（按状态压缩）
 
-W1-4 → W1-5 是仅有的硬依赖。其他全部并行可启动。
+5/5 已完成 W1-1/W1-2/W1-4/W1-5 后，本周剩余只需推教程类 + Discord：
 
-### 4.2 W1 推荐时序（按一周拆 5 个时段）
+| 时段 | 任务 | 工时 |
+|------|------|------|
+| 任选一晚 | W1-3 Discord onboarding | 0.5h |
+| 周三晚 | W1-6a ncnynl 1-13 篇 | 2h |
+| 周四晚 | W1-6b ncnynl 14-27 篇 + W1-7 上半 | 2.5h |
+| 周末（连续 2h） | W1-7 下半 + W1-8 | 2h |
 
-| 时段 | 任务 | 工时 | 心理负载 |
-|------|------|------|---------|
-| 周一晚（高能量） | W1-4 + W1-5 | 2h | 装环境，新事多 |
-| 周二晚 | W1-1 + W1-2 + W1-3 | 1.5h | 账号操作，机械 |
-| 周三晚 | W1-6 (ncnynl 1-10 篇) | 2h | 教程通读 |
-| 周四晚 | W1-6 (ncnynl 11-20 篇) + W1-7 上半 | 2h | 教程通读 + Frank Fu 部分 |
-| 周末（连续 2.5h） | W1-6 (ncnynl 21-27 篇) + W1-7 下半 + W1-8 | 2.5h | 收尾 + 子豪兄视频 |
+**剩余总工时 ~7h**。如果用户已部分读过教程，进一步压缩。
 
 ## 5. W2 任务表（第 2 周，10h）
 
-| # | 任务 | 工时 | P | 验收 |
-|---|------|------|---|------|
-| W2-1 | 创建 `sim/` 子目录 + uv 项目骨架（pyproject.toml + .venv + ruff/mypy）| 1.5h | P0 | `cd sim && uv sync` 无错；`uv run python -c "import mujoco; print(mujoco.__version__)"` 输出版本号 |
-| W2-2 | ncnynl 重点章节深读：「系统安装」「仿真环境」「训练」「sim2real」 | 3h | P0 | 4 章节笔记入 `docs/m0-handoff-notes.md` |
-| W2-3 | Frank Fu reward 设计章节 + RL 算法章节深读 | 2h | P0 | reward 函数公式抄一遍 + 笔记入交付文档 |
-| W2-4 | W&B 跑 1 次完整 hello world 训练曲线（用 sklearn / pytorch 任意小例子）| 1h | P1 | dashboard 上有完整 epoch 曲线 |
-| W2-5 | 写 `docs/m0-handoff-notes.md`：待验证问题表 + 上游"最小可跑配置"摘要 + 教程要点 | 2h | P0 | 文件 commit 入 git，含 ≥ 10 条问题 + 上游 README 摘要 |
-| W2-6 | M0 自我评审 + 决定 M1 起步顺序 | 0.5h | P0 | 在 plan-m0.md 末尾追加「M0 复盘」段落 + 起 plan-m1.md 草稿 |
+| # | 任务 | 工时 | P | 状态 | 验收 / 依据 |
+|---|------|------|---|------|------|
+| W2-1 | `sim/` 子目录 + uv 项目骨架 | 1.5h | P0 | ✅ 5/5 已完成 | 迁移自 ~/openduck-warmup（5 文件），改名 guagua-sim，`uv sync` 通过，`verify_mujoco.py` 通过 |
+| W2-2 | ncnynl 重点章节深读 4 章节 | 3h | P0 | ⏳ 视 W1-6 状态 | 4 章节笔记入 `docs/m0-handoff-notes.md` |
+| W2-3 | Frank Fu reward + RL 章节深读 | 2h | P0 | ⏳ 视 W1-7 状态 | reward 函数公式抄一遍 + 笔记入交付文档 |
+| W2-4 | W&B 跑 1 次真训练曲线（PyTorch MNIST 等）| 1h | P1 | ⏳ | dashboard 完整 epoch 曲线（W1-1 是 fake data 100 步，W2-4 要真训练） |
+| W2-5 | 写 `docs/m0-handoff-notes.md` 交付文档 | 2h | P0 | ⏳ | 文件 commit 入 git，含 ≥ 10 条问题 + 上游 README 摘要 |
+| W2-6 | M0 复盘 + plan-m1.md 草稿 | 0.5h | P0 | ⏳ | 复盘段 + plan-m1.md commit |
 
-**W2 总工时**：P0 = 9h / P1 = 1h / 合计 10h
+**W2 总工时**：P0 = 9h / P1 = 1h / 合计 10h（其中 W2-1 已完成 1.5h，剩 8.5h）
 
 ### 5.1 W2 内部依赖
 
@@ -157,3 +173,22 @@ M1 plan 在 W2-6 起草初稿（不要求完成，初稿是为了让 M0 末尾�
 ## 10. M0 复盘（W2 末追加）
 
 > 待 W2 完成后追加：实际工时 vs 预算、最大坑、下周 M1 节奏调整。
+
+## 11. W1-5 viewer GUI 手动验证步骤（用户操作）
+
+`verify_mujoco.py` 验证了 mujoco 模块层 OK，**但 viewer 弹窗 GUI 是否真能在 WSLg 下显示，需要用户手动跑一次确认**：
+
+```bash
+# WSL Ubuntu 内
+cd /mnt/d/CODE/guagua/sim
+uv run python -m mujoco.viewer
+```
+
+**预期**：弹出 GLFW 窗口，看到 mujoco 的默认场景（一个 humanoid 或空场景），可用鼠标转视角。
+
+**失败排查**：
+- WSLg 不支持：检查 `echo $DISPLAY`（应该是 `:0`）和 `echo $WAYLAND_DISPLAY`（应该是 `wayland-0`）
+- 黑屏 / GLX 错误：试 `LIBGL_ALWAYS_INDIRECT=0 uv run python -m mujoco.viewer`
+- fallback：用 `~/mujoco-3.3.1/bin/simulate ~/my_robot_2/robot.xml` 代替（用户 5/2 已验证可跑），不强求 Python viewer
+
+确认后回写 W1-5 状态从「✅ 基础部分」升级为「✅ 完整通过」。
