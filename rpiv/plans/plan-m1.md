@@ -1,8 +1,8 @@
 ---
-description: "Plan: M1 参考动作 + 仿真加载 (W3+W4 共 20h, M0 余 17h 可备用)"
-status: pending
+description: "Plan: M1 参考动作 + 仿真加载 (W3+W4, 5/6 W3 已部分完成)"
+status: in-progress
 created_at: 2026-05-05T22:45:00
-updated_at: 2026-05-05T22:45:00
+updated_at: 2026-05-06T00:15:00
 archived_at: null
 related_files:
   - rpiv/requirements/prd-stage-a.md
@@ -44,13 +44,15 @@ related_files:
 
 ### W3（第 3 周，10h）：参考动作生成器
 
-| # | 任务 | 工时 | P |
-|---|------|------|---|
-| W3-1 | 临时 clone 4 个上游仓库到 `~/code/upstream-readonly/`（不加 submodule，注意 Mini/Runtime 默认分支 `v2`）| 0.5h | P0 |
-| W3-2 | `Open_Duck_reference_motion_generator` 装好（Placo IK 依赖）| 3h | P0 |
-| W3-3 | 生成站立/原地踏步参考动作（脚本输出参考运动数据）| 2h | P0 |
-| W3-4 | 笔记：参考运动生成的输入输出格式 / 与 ncnynl 教程对应章节交叉印证 | 1.5h | P1 |
-| buffer | 应对 Placo IK 装机问题（按 PRD §M1 风险表）| 3h | - |
+| # | 任务 | 工时 | P | 状态 |
+|---|------|------|---|------|
+| W3-1 | 临时 clone 4 个上游仓库到 `~/code/upstream-readonly/`（Mini/Runtime 默认分支 `v2`）| 0.5h | P0 | ✅ 5/6 完成 |
+| W3-2 | `Open_Duck_reference_motion_generator` 装好（Placo IK 依赖）| 3h | P0 | ✅ 5/6 完成（实际 ~10 分钟，Placo 在 PyPI 有 wheel 不需本地编译；踩坑：git-lfs 必装否则 STL 全是 pointer）|
+| W3-3 | 生成站立/原地踏步参考动作（脚本输出参考运动数据）| 2h | P0 | ✅ 5/6 完成（生成第一条 .json：500帧 × 0.02s = 10秒走路轨迹，640KB）|
+| W3-4 | 笔记：参考运动生成的输入输出格式 / 与 ncnynl 教程对应章节交叉印证 | 1.5h | P2 按需 | ⏳ 按"文档不阻塞"延后 |
+| buffer | 应对 Placo IK 装机问题（按 PRD §M1 风险表）| 3h | - | ⛔ 未触发，PRD 高估了风险 |
+
+**W3 实际耗时**：约 30 分钟（vs 预算 10h），节省 9.5h 滚到 W4。
 
 ### W4（第 4 周，10h）：仿真加载 + ONNX 部署侧验证
 
