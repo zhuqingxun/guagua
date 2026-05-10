@@ -75,3 +75,10 @@ data/raw/
 data/processed/
 *.parquet
 *.h5
+
+# ─── Playwright CLI 会话临时数据 ──────────────────
+.playwright-cli/
+
+# ─── 临时调试截图（不入库） ─────────────────────
+router-*.png
+debug-*.png

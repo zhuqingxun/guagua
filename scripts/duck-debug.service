@@ -1,0 +1,12 @@
+[Unit]
+Description=Duck boot-time debug capture
+After=multi-user.target ssh.service wifi_or_ap.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/duck-debug.sh
+
+[Install]
+WantedBy=multi-user.target
