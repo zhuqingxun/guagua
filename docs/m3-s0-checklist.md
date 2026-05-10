@@ -12,7 +12,7 @@
 | ✅ M3-W1 装配 | done | 5/7 21:22 装好支架 + 低压报警 |
 | ✅ M3-W1 首次开机 | done | 5/8 22:21 接电池 + 扫到 `openduckmini` 热点 |
 | ✅ M3-W1 行走测试 | done | 5/8 晚上跑通教程 6757 |
-| 🚧 M3-W2 S0 验收 | **进行中** | Step 1 ✅ (5/10) / Step 2 半懂 / Step 3 待做 / Step 4 待做 |
+| 🚧 M3-W2 S0 验收 | **进行中** | Step 1 ✅ (5/10) / Step 2 半懂 / Step 3 进行中 (5/10 晚 DNS+mcp ✅) / Step 4 待做 |
 
 ## 接下来要做的步骤（按用户确认顺序）
 
@@ -43,7 +43,11 @@
 - 估时：1-2h（需要专注时间块，不要碎片化）
 - 验收：用小智语音模块对鸭子说话，鸭子能识别 + 通过 MCP 调用动作
 - 触发条件：Step 1+2 完成 + 你有完整的 1-2h 空闲时间
-- **未做**
+- **5/10 晚进度**：进行中
+  - ✅ 鸭子端 DNS 修复双层闭环（临时手改 + 永久 .network 防御性 DNS=223.5.5.5/119.29.29.29，避免未来装 systemd-resolved 后回退）
+  - ✅ mcp-openduck 仓库自检通过（HEAD 最新 / pip 依赖全装好 / 4 关键脚本齐：start_mcp / start_duck_mcp / mcp_point_example / openduck.py）
+  - ✅ 接手文档 + 教程 6827 cheatsheet 已写（[`s0-handoff-xiaozhi-voice-2026-05-10.md`](./s0-handoff-xiaozhi-voice-2026-05-10.md) + [`s0-xiaozhi-tutorial-cheatsheet.md`](./s0-xiaozhi-tutorial-cheatsheet.md)）
+  - ⏳ 待做物理活：拆 ESP32-S3 包 + 注册 xiaozhi.me 账号 + ESP32 配网 + 控制台拿 wss URL + start_mcp 启动 + 喊话验收 + reboot 验证
 - 注意：S0 = 用爱折腾出厂的 MCP + xiaozhi.me 后端，**不替换为自家 MCP**（违反 CLAUDE.md 红线）。自家版本是 S1+ 的事。
 
 ### Step 4️⃣ 录 demo 视频 + 备份 SD 卡
