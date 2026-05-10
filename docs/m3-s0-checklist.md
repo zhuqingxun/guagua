@@ -12,7 +12,7 @@
 | ✅ M3-W1 装配 | done | 5/7 21:22 装好支架 + 低压报警 |
 | ✅ M3-W1 首次开机 | done | 5/8 22:21 接电池 + 扫到 `openduckmini` 热点 |
 | ✅ M3-W1 行走测试 | done | 5/8 晚上跑通教程 6757 |
-| 🚧 M3-W2 S0 验收 | **进行中** | 见下方四个步骤 |
+| 🚧 M3-W2 S0 验收 | **进行中** | Step 1 ✅ (5/10) / Step 2 半懂 / Step 3 待做 / Step 4 待做 |
 
 ## 接下来要做的步骤（按用户确认顺序）
 
@@ -23,7 +23,9 @@
 - 估时：30 min
 - 验收：电脑保持在家庭 WiFi 上，能 ping / SSH 到 Pi
 - 触发条件：完成
-- **未做**
+- ✅ **5/10 完成**（实际 ~3 小时，因华为 AX2 Pro 5GHz channel 157 LAN 拦截 bug，最终切 2.4G `1101` SSID 解决）
+- 接手参考：[`docs/troubleshoot-2026-05-10-huawei-5g-channel157-blocking-ssh.md`](./troubleshoot-2026-05-10-huawei-5g-channel157-blocking-ssh.md)
+- 当前 SSH：`ssh raspios@192.168.3.166`（password `raspios`）
 
 ### Step 2️⃣ 教程 6812 web 控制（探索 web 管理界面）
 
