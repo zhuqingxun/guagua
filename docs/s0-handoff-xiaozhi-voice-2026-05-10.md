@@ -175,4 +175,78 @@ Get-Content -Raw D:\CODE\guagua\scripts\dns-diag-cmd.txt | clip
 
 ---
 
-**接手指引**：新会话进来读本文件 + 跑 Step 1 拿 DNS 数据，同时让用户做 Step 2（拆包 + 注册）。Step 3 要 DNS 通 + ESP32 配网 + xiaozhi.me 拿到 MCP 端点 URL 才能开始。
+## 📝 5/10 晚进度补丁（DNS 修复 + mcp 自检闭环）
+
+**接续到 5/11+ 会话必读**：本节后于原文档主体写入，记录 5/10 晚 subagent 推进的实际状态。如有冲突以本节为准。
+
+### Step 1 DNS 排查 → 修复 完整链路（已完成）
+
+走过 5 轮：诊断 → step1 临时 resolv.conf 验证 → step2 nmcli 失败（架构假设错） → 二次架构 probe → 最终 fix。
+
+**栈架构确证**（不是 NetworkManager 控制 wifi！）：
+- wifi 控制平面 = systemd-networkd + wpa_supplicant@wlan0.service（instance unit，不是 wpa_supplicant.service）
+- DHCP = systemd-networkd 内置（dhcpcd / dhclient 都 inactive）
+- DNS resolv.conf 写手 = **没人**！是普通文件，rpi-imager 装机一次性写死
+- NetworkManager active 但只管 eth0（"Wired connection 1"），wlan0 NM 主动 unmanaged
+- systemd-resolved **未安装**
+
+**修复双层**：
+1. **运行时层**：`/etc/resolv.conf` 手改 `nameserver 223.5.5.5` + `nameserver 119.29.29.29`（无 daemon 覆盖，已是 single-source-of-truth）
+2. **防御层**：`/etc/systemd/network/10-wlan0.network` 把 `DNS=8.8.8.8` 改 `DNS=223.5.5.5` + `DNS=119.29.29.29`（防未来 apt upgrade 装上 systemd-resolved 时回退）
+
+**验收**：5/10 晚 `curl -sS https://gitee.com -o /dev/null -w "%{http_code}"` → 200。reboot 后仍需验证（路线图任务 #10）。
+
+**相关脚本**（落 `scripts/`，commit 已就位）：
+- `scripts/dns-diag-cmd.txt` ⭐（[A]-[G] 7 段诊断）
+- `scripts/dns-fix-step1-temp.txt`（临时 resolv.conf 验证）
+- `scripts/dns-fix-step2-nmcli.txt`（已废弃 — 架构假设错；保留作教训）
+- `scripts/dns-arch-probe.txt`（10 段架构取证）
+- `scripts/dns-arch-probe2.txt`（9 段 systemd-networkd 二次取证）
+- `scripts/dns-fix-final.txt`（最终防御性修复）
+
+### mcp-openduck 仓库自检（已完成）
+
+仓库路径 `/home/raspios/open_duck_mini_ws/mcp-openduck/`，确认事实：
+
+| 字段 | 值 |
+|------|-----|
+| origin | `https://gitee.com/ncnynl/mcp-openduck`（gitee） |
+| HEAD | `3fa9fd5 update README.md. 去掉 --mcp参数` |
+| ahead/behind | 0 0（已最新） |
+| 目录 owner | raspios:raspios（无 chown 需求） |
+| working tree | clean |
+| Python | `/home/raspios/venv_duck/bin/python` 3.11.2 |
+| pip 依赖 | 全部 already satisfied（出厂装好） |
+| requirements.txt | python-dotenv / websockets / mcp / pydantic / mcp-proxy / websocket-client |
+| 关键脚本 | start_mcp.sh 136B / start_duck_mcp.sh 443B / mcp_point_example.sh 20B / openduck.py 4814B |
+| mcp_point.sh | 不存在（路线图 #7 cp 后才有） |
+
+**遗留风险**：自检时 [C] 段 `curl https://gitee.com` 5s DNS 解析超时 + `curl https://github.com` TCP 5s 超时（但同时 git fetch 走 origin gitee 成功 + curl codeload.github.com 301 通）。判定为 **中国宽带瞬时抖动**（同时段 step1 / DNS final 验收时 gitee 都 200），不阻塞推进；**reboot 验证时一并复测**。
+
+**自检脚本**：`scripts/mcp-openduck-bootstrap.txt`（13 段 [A]-[M]）。
+
+### S0 路线图 10 步状态（5/10 晚）
+
+| # | 任务 | 状态 | 操作者 |
+|---|------|------|--------|
+| 0 | DNS 修复（运行时 + 防御层） | ✅ 5/10 晚 | (subagent) |
+| 1 | mcp-openduck git 自检 | ✅ 5/10 晚 | (subagent) |
+| 2 | pip install requirements.txt | ✅ 已是出厂状态 | (subagent) |
+| 3 | 拆 ESP32-S3 包 | ⏳ 未做 | 用户物理操作 |
+| 4 | 注册 xiaozhi.me 账号 | ⏳ 未做 | 用户操作（手机号验证） |
+| 5 | ESP32 配网（手机连 ESP32 热点输 WiFi） | ⏳ | 用户物理操作（依赖 #3） |
+| 6 | xiaozhi.me 控制台：绑定 ESP32 + 创建智能体 + 添加 MCP 端点拿 URL | ⏳ | 用户主导，可用 Playwright MCP 协助（依赖 #4+#5） |
+| 7 | 鸭子端 `cp mcp_point_example.sh mcp_point.sh` + 填 wss URL | ⏳ | subagent 给单行命令 / 用户跑（依赖 #6） |
+| 8 | `./start_mcp.sh` + `./start_duck_mcp.sh` | ⏳ | subagent 给指引 / 用户跑（依赖 #7） |
+| 9 | ESP32 喊"让鸭子向前两步"验收 | ⏳ | 用户操作（依赖 #8） |
+| 10 | reboot 验证 DNS final 永久生效 + 整套 S0 重启后仍工作 | ⏳ | 用户重启 + subagent 验收清单（依赖 #9） |
+
+**关键文档**：教程 6827 操作要点已浓缩在 [`docs/s0-xiaozhi-tutorial-cheatsheet.md`](./s0-xiaozhi-tutorial-cheatsheet.md)，接续会话直接读 cheatsheet 不必重 fetch。
+
+### Push 状态（5/10 晚）
+
+`master` 比 `origin/master` ahead 7+ commit（DNS 修复链 6 commit + S0 路线图相关）。**未推**，等 S0 收敛或用户决策批推时机。**红线提醒**：只 push GitHub origin，不动 gitee remote。
+
+---
+
+**接手指引**（5/10 晚更新版）：新会话进来读本文件 → 阅读上面 "5/10 晚进度补丁" 段拿到当前状态 → 读 [`docs/s0-xiaozhi-tutorial-cheatsheet.md`](./s0-xiaozhi-tutorial-cheatsheet.md) 拿教程 6827 要点 → 按 S0 路线图 10 步状态表推进剩余任务（#3-#10）。DNS 修复链已闭环，不必重做。
