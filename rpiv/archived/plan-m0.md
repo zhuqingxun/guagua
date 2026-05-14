@@ -1,9 +1,9 @@
 ---
 description: "Plan: M0 仿真工具链 + 教程预读 (5/5 完成, 实际 ~3h vs 预算 20h)"
-status: completed
+status: archived
 created_at: 2026-05-05T18:00:00
-updated_at: 2026-05-05T22:50:00
-archived_at: null
+updated_at: 2026-05-14T22:49:19
+archived_at: 2026-05-14T22:49:19
 related_files:
   - rpiv/requirements/prd-stage-a.md
   - rpiv/todo/m0w1-dev-env.md

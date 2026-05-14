@@ -1,10 +1,11 @@
 ---
 title: M0-W1 开发环境 + 教程通读首轮 + 社区准入（10h）
 type: todo
-status: completed
+status: archived
 priority: high
 created_at: 2026-05-01
-updated_at: 2026-05-05T20:30:00
+updated_at: 2026-05-14T22:49:19
+archived_at: 2026-05-14T22:49:19
 milestone: M0-W1
 time_estimate: 10h（5/5 实际 P0 全过；P1 滚到 W2）
 related_files:

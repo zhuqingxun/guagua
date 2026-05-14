@@ -1,16 +1,19 @@
 ---
 title: M2 决策门通过后 下单爱折腾整机版 ¥4199（5/5 用户已先行下单）
 type: todo
-status: in-progress
+status: archived
 priority: high
 created_at: 2026-05-02T00:18:00
-updated_at: 2026-05-05T19:00:00
+updated_at: 2026-05-14T22:47:18
+archived_at: 2026-05-14T22:47:18
 milestone: M2-end
 blocking: M3-M6 全部硬件期任务
 related_files:
   - rpiv/requirements/prd-stage-a.md
   - rpiv/plans/plan-m0.md
 ---
+
+> **归档说明 (2026-05-14)**：下单 (5/5)、收货 (5/8)、首次跑通行走测试 (5/8 晚)、首次充电 (5/11) 均已完成，5/12 commit `da11a56` 阶段 A 对账确认 "M3 已超额"。剩余卖家追问项 (MCP 仓库地址 / 头灯 GPIO / 航模电池规格) 已在过程中通过其它渠道获得或被新 issue 覆盖 (电池规格 → `m3-issue-battery-cell-dead.md`)。本 todo 使命完成，归档。
 
 # M2 决策门后的硬件下单（整机版）
 

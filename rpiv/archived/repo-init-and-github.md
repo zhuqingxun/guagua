@@ -1,9 +1,10 @@
 ---
 title: Git 初始化 + GitHub Public 仓库创建 + Gitee 镜像 remote
 type: todo
-status: completed
+status: archived
 created_at: 2026-05-01
-updated_at: 2026-05-01
+updated_at: 2026-05-14T22:49:19
+archived_at: 2026-05-14T22:49:19
 priority: high
 ---
 
