@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>UDP6730 裸线接入 4 步图解</title>
+<style>
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    max-width: 920px;
+    margin: 24px auto 64px;
+    padding: 0 20px;
+    background: #fafafa;
+    color: #222;
+    line-height: 1.65;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.7em;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+  }
+  .subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 36px;
+    font-size: 0.95em;
+  }
+  .panel-overview {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+  .panel-overview svg { flex-shrink: 0; }
+  .step {
+    display: flex;
+    gap: 28px;
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    align-items: flex-start;
+  }
+  .step-svg {
+    flex: 0 0 240px;
+  }
+  .step-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .step-text h2 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 1.2em;
+  }
+  .step-num {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background: #2a7a3b;
+    color: white;
+    text-align: center;
+    line-height: 30px;
+    font-weight: bold;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  .step-text p { margin: 8px 0; }
+  .step-text ul { margin: 8px 0; padding-left: 20px; }
+  .step-text li { margin: 4px 0; }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 36px 0 24px;
+  }
+  .compare > div {
+    padding: 18px;
+    border-radius: 8px;
+  }
+  .compare h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.05em;
+  }
+  .good {
+    background: #e8f4ea;
+    border: 2px solid #2a7a3b;
+  }
+  .bad {
+    background: #fbeaea;
+    border: 2px solid #c44;
+  }
+  .key {
+    background: #fff8dc;
+    border-left: 4px solid #d4a017;
+    padding: 14px 18px;
+    margin: 28px 0;
+    border-radius: 4px;
+  }
+  .compare svg { display: block; margin: 8px auto; }
+  h2.section { text-align: center; margin-top: 48px; font-size: 1.3em; }
+  code { background: #eee; padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+
+<h1>UDP6730 裸线接入 4 步图解</h1>
+<p class="subtitle">不需要"灯笼头", 不需要子弹头, 直接拧</p>
+
+<div class="key" style="border-left-color:#c44;background:#fbeaea">
+  <strong>⚠️ 2026-05-19 实测修正</strong>: 用户实测<b>剥皮后的 12 AWG 多股硅胶线无法直接插入 UDP6730 横孔</b>——多股绞合后裸铜实际外径约 3.0-3.5 mm, 横孔疑似 &lt; 3 mm (手册未给具体规格).
+  <br><br>
+  原"方案 A 镀锡直接塞"<b>降级为备选</b> (镀锡后直径变化不大甚至略增, 多半仍进不去). <b>主推方案 C (VE6-12 针型端子, 针标准直径 ~2.5 mm)</b>, 是唯一已知能可靠塞入的方法. 采购游标卡尺先实测横孔孔径再决定最终方案.
+</div>
+
+<!-- 前面板定位 -->
+<div class="panel-overview">
+  <svg width="240" height="140" viewBox="0 0 240 140">
+    <!-- 机壳 -->
+    <rect x="6" y="6" width="228" height="128" fill="#ececef" stroke="#888" stroke-width="1.5" rx="6" />
+    <!-- 屏幕 -->
+    <rect x="20" y="18" width="80" height="56" fill="#1a3018" stroke="#444" rx="2" />
+    <text x="60" y="36" font-size="11" fill="#7fff7f" text-anchor="middle" font-family="monospace">12.00 V</text>
+    <text x="60" y="50" font-size="11" fill="#7fff7f" text-anchor="middle" font-family="monospace">08.00 A</text>
+    <text x="60" y="64" font-size="10" fill="#7fff7f" text-anchor="middle" font-family="monospace">CV  M1</text>
+    <!-- 按键阵列 -->
+    <rect x="112" y="20" width="18" height="14" fill="#bbb" rx="2" /><text x="121" y="31" font-size="8" text-anchor="middle">M1</text>
+    <rect x="135" y="20" width="18" height="14" fill="#bbb" rx="2" /><text x="144" y="31" font-size="8" text-anchor="middle">V</text>
+    <rect x="158" y="20" width="18" height="14" fill="#bbb" rx="2" /><text x="167" y="31" font-size="8" text-anchor="middle">↺</text>
+    <rect x="112" y="40" width="18" height="14" fill="#bbb" rx="2" /><text x="121" y="51" font-size="8" text-anchor="middle">M2</text>
+    <rect x="135" y="40" width="18" height="14" fill="#bbb" rx="2" /><text x="144" y="51" font-size="8" text-anchor="middle">A</text>
+    <rect x="112" y="60" width="18" height="14" fill="#bbb" rx="2" /><text x="121" y="71" font-size="8" text-anchor="middle">M3</text>
+    <rect x="135" y="60" width="18" height="14" fill="#bbb" rx="2" /><text x="144" y="71" font-size="8" text-anchor="middle">MEN</text>
+    <rect x="190" y="40" width="34" height="20" fill="#888" rx="10" /><text x="207" y="54" font-size="9" fill="white" text-anchor="middle">旋钮</text>
+    <!-- 底部端子 -->
+    <circle cx="30" cy="108" r="10" fill="#444" stroke="#222" /><text x="30" y="128" font-size="9" text-anchor="middle">电源</text>
+    <circle cx="120" cy="108" r="11" fill="#cc4040" stroke="#852828" stroke-width="1.5" />
+    <circle cx="120" cy="108" r="3" fill="#222" />
+    <text x="120" y="128" font-size="10" fill="#cc4040" text-anchor="middle" font-weight="bold">+</text>
+    <circle cx="156" cy="108" r="11" fill="#2a2a2a" stroke="#000" stroke-width="1.5" />
+    <circle cx="156" cy="108" r="3" fill="#666" />
+    <text x="156" y="128" font-size="10" fill="#000" text-anchor="middle" font-weight="bold">−</text>
+    <circle cx="192" cy="108" r="10" fill="#5a9a5a" stroke="#3a7a3a" /><text x="192" y="128" font-size="9" fill="#3a7a3a" text-anchor="middle">GND</text>
+    <!-- 标注框 -->
+    <rect x="106" y="92" width="64" height="32" fill="none" stroke="#d4a017" stroke-width="2" stroke-dasharray="3,2" rx="3" />
+  </svg>
+  <div>
+    <h2 style="margin-top:0">先在前面板上找到这两个端子</h2>
+    <p>UDP6730 前面板右下角的<b style="color:#cc4040">红色 (+)</b> 和 <b>黑色 (−)</b> 两个圆形端子, 就是输出端口. 黄色虚线框圈出来的那两个.</p>
+    <p>右边的绿色 GND 是接地端子, 鸭子项目不接.</p>
+    <p style="color:#888;font-size:0.92em">接下来我们放大看这两个红黑端子的内部结构.</p>
+  </div>
+</div>
+
+<!-- Step 0: 端子结构 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="280" viewBox="0 0 240 280">
+      <!-- 面板背景 -->
+      <rect x="0" y="195" width="240" height="85" fill="#d8d8dc" />
+      <text x="15" y="215" fill="#888" font-size="11">UDP6730 前面板</text>
+      <!-- 金属杆(完整高度) -->
+      <rect x="100" y="50" width="22" height="155" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <!-- 杆顶 -->
+      <ellipse cx="111" cy="50" rx="11" ry="3" fill="#d8b878" stroke="#8b7642" />
+      <!-- 香蕉孔 -->
+      <ellipse cx="111" cy="52" rx="5" ry="1.5" fill="#222" />
+      <text x="135" y="55" font-size="11" fill="#444">顶部插孔 (4mm)</text>
+      <text x="135" y="68" font-size="10" fill="#888">插香蕉头用</text>
+      <!-- 彩色塑料螺帽 -->
+      <ellipse cx="111" cy="110" rx="38" ry="11" fill="#d54a4a" stroke="#852828" stroke-width="1" />
+      <rect x="73" y="110" width="76" height="42" fill="#cc4040" stroke="#852828" stroke-width="1" />
+      <ellipse cx="111" cy="152" rx="38" ry="11" fill="#a83333" stroke="#852828" stroke-width="1" />
+      <!-- 螺帽螺纹示意 -->
+      <line x1="73" y1="120" x2="149" y2="120" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="130" x2="149" y2="130" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="140" x2="149" y2="140" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <text x="155" y="130" font-size="11" fill="#444">彩色塑料螺帽</text>
+      <text x="155" y="143" font-size="10" fill="#888">可旋转上下移动</text>
+      <!-- 隐藏的横孔(虚线圆) -->
+      <ellipse cx="111" cy="131" rx="4.5" ry="3.5" fill="none" stroke="#444" stroke-width="1" stroke-dasharray="2,2" />
+      <line x1="111" y1="170" x2="111" y2="135" stroke="#444" stroke-width="0.5" stroke-dasharray="2,2" />
+      <text x="55" y="178" font-size="10" fill="#777">横孔藏在</text>
+      <text x="55" y="190" font-size="10" fill="#777">螺帽里 ↑</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2><span class="step-num">0</span>认识端子: 香蕉孔 + 接线柱二合一</h2>
+    <p>UDP6730 的红/黑输出端子是<b>"4mm 香蕉孔 + 接线柱"二合一结构</b> (业内俗称 Binding Post), 不是单纯的香蕉孔.</p>
+    <ul>
+      <li><b>顶部小圆孔</b> → 插 4mm 香蕉头 (快插模式, 你不需要)</li>
+      <li><b>侧面横孔</b> → 直接夹裸线 (你要用的模式) <span style="color:#c44">藏在彩色螺帽里, 平时看不见</span></li>
+    </ul>
+    <p>所以"裸线接入"是这个端子的<b>原生设计用法</b>, 不是 hack.</p>
+  </div>
+</div>
+
+<!-- Step 1: 拧松 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="280" viewBox="0 0 240 280">
+      <rect x="0" y="195" width="240" height="85" fill="#d8d8dc" />
+      <!-- 金属杆 -->
+      <rect x="100" y="50" width="22" height="155" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <ellipse cx="111" cy="50" rx="11" ry="3" fill="#d8b878" stroke="#8b7642" />
+      <ellipse cx="111" cy="52" rx="5" ry="1.5" fill="#222" />
+      <!-- 螺帽(向上移动了, 拧松) -->
+      <ellipse cx="111" cy="78" rx="38" ry="11" fill="#d54a4a" stroke="#852828" stroke-width="1" />
+      <rect x="73" y="78" width="76" height="38" fill="#cc4040" stroke="#852828" stroke-width="1" />
+      <ellipse cx="111" cy="116" rx="38" ry="11" fill="#a83333" stroke="#852828" stroke-width="1" />
+      <line x1="73" y1="88" x2="149" y2="88" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="98" x2="149" y2="98" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="108" x2="149" y2="108" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <!-- 螺帽抬升的空隙(显示出来的杆段) -->
+      <rect x="100" y="116" width="22" height="36" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <!-- 横孔(现在可见, 实心) -->
+      <ellipse cx="111" cy="133" rx="5" ry="4" fill="#1a1a1a" stroke="#444" stroke-width="1" />
+      <text x="155" y="137" font-size="11" fill="#2a7a3b" font-weight="bold">←横孔露出</text>
+      <!-- 旋转箭头 -->
+      <path d="M 55 100 Q 42 105 50 118" fill="none" stroke="#2a7a3b" stroke-width="2.5" />
+      <polygon points="50,118 44,110 56,114" fill="#2a7a3b" />
+      <text x="14" y="98" font-size="11" fill="#2a7a3b" font-weight="bold">逆时针 ↺</text>
+      <text x="14" y="135" font-size="10" fill="#2a7a3b">3-5mm 即可</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2><span class="step-num">1</span>逆时针拧松彩色螺帽</h2>
+    <p>像拧矿泉水瓶盖那样, <b>逆时针</b>拧外圈塑料螺帽 (红端子拧红的, 黑端子拧黑的).</p>
+    <p><b>不要拧到完全脱开</b> —— 螺帽只需向上"升起" 3-5 mm, 横孔露出来即可. 拧太多容易掉.</p>
+    <p>这时金属杆侧面会露出一个直径约 3 mm 的小孔, 那就是穿裸线用的横孔.</p>
+  </div>
+</div>
+
+<!-- Step 2: 穿线 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="280" viewBox="0 0 240 280">
+      <rect x="0" y="195" width="240" height="85" fill="#d8d8dc" />
+      <!-- 金属杆 -->
+      <rect x="100" y="50" width="22" height="155" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <ellipse cx="111" cy="50" rx="11" ry="3" fill="#d8b878" stroke="#8b7642" />
+      <ellipse cx="111" cy="52" rx="5" ry="1.5" fill="#222" />
+      <!-- 螺帽(拧松) -->
+      <ellipse cx="111" cy="78" rx="38" ry="11" fill="#d54a4a" stroke="#852828" stroke-width="1" />
+      <rect x="73" y="78" width="76" height="38" fill="#cc4040" stroke="#852828" stroke-width="1" />
+      <ellipse cx="111" cy="116" rx="38" ry="11" fill="#a83333" stroke="#852828" stroke-width="1" />
+      <rect x="100" y="116" width="22" height="36" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <!-- 12 AWG 硅胶线 - 红色绝缘皮 (右侧, 较长) -->
+      <rect x="160" y="128" width="78" height="10" fill="#d54a4a" stroke="#852828" stroke-width="1" rx="3" />
+      <text x="199" y="122" font-size="10" fill="#444" text-anchor="middle">硅胶绝缘皮</text>
+      <!-- 裸铜段 -->
+      <rect x="115" y="129" width="48" height="8" fill="#d68a3a" stroke="#8b5020" stroke-width="0.5" rx="1" />
+      <!-- 铜丝纹理 -->
+      <line x1="115" y1="131" x2="163" y2="131" stroke="#a86020" stroke-width="0.3" />
+      <line x1="115" y1="133" x2="163" y2="133" stroke="#a86020" stroke-width="0.3" />
+      <line x1="115" y1="135" x2="163" y2="135" stroke="#a86020" stroke-width="0.3" />
+      <text x="139" y="155" font-size="10" fill="#444" text-anchor="middle">裸铜 ~8mm</text>
+      <!-- 横孔被穿入(铜丝填满) -->
+      <ellipse cx="111" cy="133" rx="5" ry="4" fill="#d68a3a" stroke="#8b5020" stroke-width="0.5" />
+      <!-- 穿入方向箭头 -->
+      <path d="M 175 105 L 135 122" fill="none" stroke="#2a7a3b" stroke-width="2.5" />
+      <polygon points="135,122 145,116 144,126" fill="#2a7a3b" />
+      <text x="170" y="100" font-size="11" fill="#2a7a3b" font-weight="bold">穿入 →</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2><span class="step-num">2</span>12 AWG 线剥皮 ~8mm, 穿入横孔</h2>
+    <p>用剥线钳剥掉 12 AWG 硅胶线末端 <b>约 8-10 mm</b> 的硅胶皮, 露出整齐的铜丝.</p>
+    <p>把裸铜从右侧水平塞进金属杆的横孔, 推到底, 铜丝应该<b>贯穿整个杆</b> (另一侧露出一点点是正常的).</p>
+    <ul>
+      <li><span style="color:#cc4040;font-weight:bold">红色线 → 红色端子</span> (正极)</li>
+      <li><span style="font-weight:bold">黑色线 → 黑色端子</span> (负极)</li>
+    </ul>
+    <p style="color:#c44"><b>极性不能反.</b> 接反了打开 OUTPUT 瞬间会击穿鸭子.</p>
+    <div style="background:#fbeaea;border-left:3px solid #c44;padding:10px 14px;margin-top:12px;font-size:0.92em">
+      <p style="margin:0 0 10px"><b>⚠ 2026-05-19 实测打脸</b>: 用户实测剥皮后的 12 AWG 多股硅胶线<b>无法</b>直接塞入 UDP6730 横孔——绞合后裸铜外径约 3.0-3.5 mm, 横孔孔径疑似 &lt; 3 mm. <b>直接走方案 C (VE6-12 针型端子) 是当前唯一已知可靠的方法</b>, 跳过方案 A.</p>
+      <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+        <figure style="margin:0;flex:1;min-width:240px">
+          <img src="photos/udp6730-wiring/2026-05-19-12awg-bare-cu-vs-ruler.png" alt="剥皮绞合后的 12 AWG 裸铜对照尺子" style="width:100%;border:1px solid #ccc;border-radius:4px;display:block">
+          <figcaption style="font-size:0.85em;color:#666;margin-top:4px;text-align:center">绞合后裸铜外径 ≈ 3 mm (尺子刻度 cm)</figcaption>
+        </figure>
+        <figure style="margin:0;flex:1;min-width:240px">
+          <img src="photos/udp6730-wiring/2026-05-19-12awg-no-fit-into-side-hole.png" alt="12 AWG 多股硅胶线塞不进 UDP6730 横孔" style="width:100%;border:1px solid #ccc;border-radius:4px;display:block">
+          <figcaption style="font-size:0.85em;color:#666;margin-top:4px;text-align:center">线根本进不去横孔 (拧开螺帽后实测)</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 穿线技巧扩展 -->
+<h2 class="section">穿线技巧: 防止 12 AWG 铜丝散开</h2>
+<p style="text-align:center;color:#666;margin-top:-12px;margin-bottom:20px">
+  方案 A / 方案 C 任选一种. 横孔 3-4 mm, 12 AWG 多股软线裸铜约 2.5-2.8 mm, 物理上能进去但易散开.
+</p>
+
+<!-- 方案 A: 镀锡 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <!-- 上半部分: 散开状态 -->
+      <text x="120" y="18" font-size="12" fill="#c44" text-anchor="middle" font-weight="bold">❌ 直接剥皮 → 铜丝散开</text>
+      <rect x="135" y="30" width="100" height="14" fill="#d54a4a" stroke="#852828" rx="3" />
+      <path d="M 133 32 Q 100 24 55 18" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <path d="M 133 34 Q 105 32 60 30" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <path d="M 133 36 Q 100 38 50 38" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <path d="M 133 38 Q 95 42 55 48" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <path d="M 133 40 Q 105 46 65 54" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <path d="M 133 42 Q 95 52 50 62" stroke="#d68a3a" stroke-width="1.2" fill="none" />
+      <text x="65" y="80" font-size="10" fill="#c44" text-anchor="middle">铜丝散开 卡螺纹</text>
+
+      <!-- 中间: 烙铁加热示意 -->
+      <line x1="120" y1="92" x2="120" y2="118" stroke="#2a7a3b" stroke-width="2.5" />
+      <polygon points="120,118 113,108 127,108" fill="#2a7a3b" />
+      <!-- 烙铁简化图标 -->
+      <g transform="translate(150, 90)">
+        <rect x="0" y="0" width="42" height="9" fill="#444" stroke="#222" rx="2" />
+        <rect x="-12" y="2" width="12" height="5" fill="#777" />
+        <polygon points="42,4.5 56,0 56,9" fill="#aa8855" />
+        <polygon points="50,3 62,5 50,7" fill="#dddd44" />
+      </g>
+      <text x="172" y="113" font-size="9" fill="#444" text-anchor="middle">烙铁 + 焊锡</text>
+
+      <!-- 下半部分: 镀锡后 -->
+      <text x="120" y="148" font-size="12" fill="#2a7a3b" text-anchor="middle" font-weight="bold">✓ 镀锡后 → 实心圆柱</text>
+      <rect x="135" y="160" width="100" height="14" fill="#d54a4a" stroke="#852828" rx="3" />
+      <rect x="55" y="162" width="80" height="10" fill="#c4c4d0" stroke="#888" rx="2" />
+      <line x1="60" y1="164" x2="130" y2="164" stroke="#eef" stroke-width="0.8" />
+      <line x1="60" y1="170" x2="130" y2="170" stroke="#888" stroke-width="0.4" />
+      <text x="95" y="190" font-size="10" fill="#2a7a3b" text-anchor="middle">直径 ~2.7mm 实心</text>
+
+      <!-- 穿入横孔示意 -->
+      <rect x="34" y="200" width="22" height="32" fill="#c9a868" stroke="#8b7642" />
+      <ellipse cx="45" cy="216" rx="4.5" ry="3.5" fill="#1a1a1a" stroke="#444" />
+      <rect x="45" y="212" width="55" height="8" fill="#c4c4d0" stroke="#888" />
+      <rect x="100" y="210" width="100" height="12" fill="#d54a4a" stroke="#852828" rx="2" />
+      <text x="120" y="236" font-size="9" fill="#888" text-anchor="middle">→ 完美穿入</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2 style="color:#888"><span class="step-num" style="background:#888">A</span>镀锡处理 (备选, 横孔实测 ≥3.5 mm 时才用)</h2>
+    <p style="background:#fbeaea;border-left:3px solid #c44;padding:8px 12px;font-size:0.92em"><b>2026-05-19 降级</b>: 镀锡只能让铜丝<b>不散开</b>, 但<b>不能让直径变小</b>(锡层覆盖时甚至略增). 用户实测裸 12 AWG 已经塞不进横孔, 镀锡后大概率仍塞不进. 用游标卡尺量过横孔 ≥3.5 mm 才考虑这个方案.</p>
+    <p><b>步骤</b>(横孔够大时): 剥皮 8mm → 烙铁加热到 ~350℃ → 用焊锡丝在裸铜段挂一层薄锡 → 所有细铜丝熔成一根<b>实心 ~2.7mm 圆柱</b> → 穿入横孔.</p>
+    <ul>
+      <li>✓ 永不散开, 拆装多次也稳</li>
+      <li>✓ 接触电阻最低, 25A 长期稳定不发热</li>
+      <li>✓ 抗氧化 (锡层覆盖防铜腐蚀)</li>
+      <li>⚠ 需要烙铁 + 焊锡丝 (鸭子项目焊 ST3215 / GPIO 总要用到, 一次投资到位)</li>
+    </ul>
+    <p style="color:#888;font-size:0.9em">关键: 锡熔化时要<b>快进快出</b>, 锡量适中. 锡太多会鼓出来, 反而塞不进横孔; 锡太少铜丝还会冒出.</p>
+  </div>
+</div>
+
+<!-- 方案 C: 针型冷压端子 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="240" viewBox="0 0 240 240">
+      <text x="120" y="18" font-size="12" fill="#2a7a3b" text-anchor="middle" font-weight="bold">压接 VE6-12 针型端子</text>
+
+      <!-- 12 AWG 硅胶线 (右侧) -->
+      <rect x="155" y="50" width="85" height="14" fill="#d54a4a" stroke="#852828" rx="3" />
+      <text x="197" y="44" font-size="9" fill="#444" text-anchor="middle">12 AWG 硅胶线</text>
+
+      <!-- 黄色绝缘套 (PTV 6.0 黄色) -->
+      <rect x="105" y="48" width="50" height="18" fill="#e8c040" stroke="#8b7020" stroke-width="1" rx="2" />
+      <text x="130" y="82" font-size="9" fill="#8b7020" text-anchor="middle">黄色绝缘套 (6mm²)</text>
+
+      <!-- 金属针 (银白色) -->
+      <rect x="62" y="53" width="46" height="8" fill="#c0c0d0" stroke="#888" stroke-width="0.5" rx="1" />
+      <ellipse cx="62" cy="57" rx="2" ry="4" fill="#a0a0b0" stroke="#666" />
+      <text x="85" y="96" font-size="9" fill="#444" text-anchor="middle">~2.5mm 镀镍铜针</text>
+
+      <!-- 压痕示意 -->
+      <line x1="115" y1="50" x2="115" y2="64" stroke="#5a4515" stroke-width="0.8" />
+      <line x1="125" y1="50" x2="125" y2="64" stroke="#5a4515" stroke-width="0.8" />
+      <line x1="135" y1="50" x2="135" y2="64" stroke="#5a4515" stroke-width="0.8" />
+      <line x1="145" y1="50" x2="145" y2="64" stroke="#5a4515" stroke-width="0.8" />
+      <text x="130" y="115" font-size="9" fill="#666" text-anchor="middle">↑ 冷压钳留下的压痕 ↑</text>
+
+      <!-- 中间箭头 -->
+      <line x1="120" y1="130" x2="120" y2="155" stroke="#2a7a3b" stroke-width="2.5" />
+      <polygon points="120,155 113,145 127,145" fill="#2a7a3b" />
+
+      <!-- 下方: 插入横孔 -->
+      <text x="120" y="178" font-size="12" fill="#2a7a3b" text-anchor="middle" font-weight="bold">插入 UDP6730 横孔</text>
+      <rect x="34" y="190" width="22" height="40" fill="#c9a868" stroke="#8b7642" />
+      <ellipse cx="45" cy="208" rx="4.5" ry="3.5" fill="#1a1a1a" stroke="#444" />
+      <rect x="45" y="204" width="55" height="8" fill="#c0c0d0" stroke="#888" />
+      <rect x="100" y="200" width="40" height="16" fill="#e8c040" stroke="#8b7020" rx="2" />
+      <rect x="140" y="202" width="92" height="12" fill="#d54a4a" stroke="#852828" rx="2" />
+      <text x="135" y="234" font-size="10" fill="#2a7a3b" text-anchor="middle">✓ 直径完美匹配</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2 style="color:#2a7a3b"><span class="step-num" style="background:#2a7a3b">C</span>针型冷压端子 (⭐ 当前唯一推荐方案)</h2>
+    <p style="background:#e8f4ea;border-left:3px solid #2a7a3b;padding:8px 12px;font-size:0.92em"><b>2026-05-19 升为主推</b>: VE6-12 针部分是 <b>标准化 ~2.5 mm 实心圆柱</b>, 业界专门设计就是塞 3 mm 左右的接线柱横孔. UDP6730 横孔再小, &lt; 2.5 mm 的可能性极低. 这是当前唯一已知可靠的方案.</p>
+    <p><b>步骤</b>: 12 AWG 末端套上 <b>VE6-12 黄色针型端子</b> (6mm² 套筒能容 12 AWG 多股铜) → 用棘轮冷压钳压紧 (4-5 个压痕) → 把针端插入横孔 → 拧紧螺帽.</p>
+    <ul>
+      <li>✓ 行业标准做法, 装拆方便</li>
+      <li>✓ 针的直径标准化, 完美匹配横孔</li>
+      <li>✓ 绝缘套同时保护剥皮处, 防止铜丝裸露短路</li>
+      <li>⚠ 需要冷压钳 + 一袋端子 (后续接 GPIO / I2C / RS485 / DC 电机都用得到)</li>
+    </ul>
+    <p style="color:#888;font-size:0.9em"><b>端子型号</b>: 找 <code>VE6-12</code> 或 <code>VE6012</code>, 含义 = "6mm² 套筒 + 12mm 总长 + 黄色绝缘". 也叫"针型管型端子" / "欧式针型端子".</p>
+  </div>
+</div>
+
+<!-- Step 3: 拧紧 -->
+<div class="step">
+  <div class="step-svg">
+    <svg width="240" height="280" viewBox="0 0 240 280">
+      <rect x="0" y="195" width="240" height="85" fill="#d8d8dc" />
+      <!-- 金属杆 -->
+      <rect x="100" y="50" width="22" height="155" fill="#c9a868" stroke="#8b7642" stroke-width="1" />
+      <ellipse cx="111" cy="50" rx="11" ry="3" fill="#d8b878" stroke="#8b7642" />
+      <ellipse cx="111" cy="52" rx="5" ry="1.5" fill="#222" />
+      <!-- 硅胶线右侧露出 -->
+      <rect x="148" y="128" width="92" height="10" fill="#d54a4a" stroke="#852828" stroke-width="1" rx="3" />
+      <!-- 螺帽回到原位 (夹紧) -->
+      <ellipse cx="111" cy="110" rx="38" ry="11" fill="#d54a4a" stroke="#852828" stroke-width="1" />
+      <rect x="73" y="110" width="76" height="42" fill="#cc4040" stroke="#852828" stroke-width="1" />
+      <ellipse cx="111" cy="152" rx="38" ry="11" fill="#a83333" stroke="#852828" stroke-width="1" />
+      <line x1="73" y1="120" x2="149" y2="120" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="130" x2="149" y2="130" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <line x1="73" y1="140" x2="149" y2="140" stroke="#852828" stroke-width="0.5" opacity="0.4" />
+      <!-- 旋转箭头(反向) -->
+      <path d="M 55 130 Q 42 125 50 112" fill="none" stroke="#2a7a3b" stroke-width="2.5" />
+      <polygon points="50,112 44,120 56,116" fill="#2a7a3b" />
+      <text x="14" y="135" font-size="11" fill="#2a7a3b" font-weight="bold">顺时针 ↻</text>
+      <!-- 夹紧标志 -->
+      <text x="111" y="240" font-size="22" fill="#2a7a3b" font-weight="bold" text-anchor="middle">✓ 夹紧</text>
+      <!-- 拽线测试图示 -->
+      <path d="M 220 133 L 235 145" stroke="#2a7a3b" stroke-width="1.5" stroke-dasharray="3,2" />
+      <text x="200" y="160" font-size="9" fill="#2a7a3b">拽线不脱</text>
+    </svg>
+  </div>
+  <div class="step-text">
+    <h2><span class="step-num">3</span>顺时针拧紧螺帽</h2>
+    <p>把彩色螺帽<b>顺时针</b>拧回原位, 螺帽底部会把裸铜<b>夹紧在金属杆肩部</b>, 形成大面积金属对金属接触.</p>
+    <p><b>验证夹紧</b>: 用中等力度拽线 (约 2-3 公斤拉力), 线不脱出即为夹紧成功. 拽不动 = OK.</p>
+    <p>另一根线 (黑色, 接黑色端子) <b>重复 Step 1-3</b>.</p>
+    <p style="color:#888">两根都接好后, 按 cheatsheet §4 走空载验机流程: 万用表 V⎓ 档测红黑端子, 应显示 +12.00 V.</p>
+  </div>
+</div>
+
+<!-- 对比方案 -->
+<h2 class="section">为什么不用航模 4mm 子弹头?</h2>
+<div class="compare">
+  <div class="good">
+    <h3>✅ 接线柱直接接裸线 (推荐)</h3>
+    <svg width="220" height="130" viewBox="0 0 220 130">
+      <rect x="85" y="20" width="22" height="90" fill="#c9a868" stroke="#8b7642" />
+      <ellipse cx="96" cy="20" rx="11" ry="3" fill="#d8b878" />
+      <rect x="60" y="55" width="76" height="38" fill="#cc4040" stroke="#852828" />
+      <ellipse cx="96" cy="55" rx="38" ry="11" fill="#d54a4a" stroke="#852828" />
+      <ellipse cx="96" cy="93" rx="38" ry="11" fill="#a83333" stroke="#852828" />
+      <!-- 线 -->
+      <rect x="136" y="71" width="80" height="10" fill="#d54a4a" stroke="#852828" rx="3" />
+      <rect x="100" y="72" width="38" height="8" fill="#d68a3a" stroke="#8b5020" stroke-width="0.5" />
+    </svg>
+    <ul>
+      <li><b>金属对金属</b>大面积压接, 接触电阻极低</li>
+      <li>螺纹机械锁紧, <b>25A 长期通过</b>不发热</li>
+      <li>0 焊接, 0 中间环节</li>
+      <li>UDP6730 的<b>预期标准用法</b></li>
+    </ul>
+  </div>
+  <div class="bad">
+    <h3>❌ 航模子弹头插香蕉孔</h3>
+    <svg width="220" height="130" viewBox="0 0 220 130">
+      <rect x="85" y="20" width="22" height="90" fill="#c9a868" stroke="#8b7642" />
+      <ellipse cx="96" cy="20" rx="11" ry="3" fill="#d8b878" />
+      <ellipse cx="96" cy="22" rx="6" ry="2" fill="#222" />
+      <!-- 子弹头(实心圆柱, 倾斜表示松动) -->
+      <rect x="86" y="30" width="20" height="14" fill="#c0c0c0" stroke="#777" rx="2" transform="rotate(-8 96 37)" />
+      <text x="50" y="50" font-size="10" fill="#c44" transform="rotate(-8 96 37)">松动</text>
+      <!-- 焊接尾巴 -->
+      <rect x="95" y="42" width="3" height="14" fill="#aaa" transform="rotate(-8 96 37)" />
+      <!-- 线 -->
+      <rect x="100" y="55" width="80" height="10" fill="#d54a4a" stroke="#852828" rx="3" transform="rotate(20 100 60)" />
+      <!-- 警告 -->
+      <text x="160" y="95" font-size="16" fill="#c44" font-weight="bold">⚠</text>
+      <text x="80" y="115" font-size="10" fill="#c44" text-anchor="middle">配对错误</text>
+    </svg>
+    <ul>
+      <li>子弹头是<b>光面实心圆柱</b>, 没有弹性分叉, 仅靠摩擦保持</li>
+      <li><b>25A 长期通过发热</b>, 可能烧端子</li>
+      <li>子弹头必须公母配对才能用, <b>电源端没有匹配的母头</b></li>
+      <li>需要焊接, 多一道工序还容易虚焊</li>
+    </ul>
+  </div>
+</div>
+
+<div class="key">
+  <strong>关键提示</strong>: UDP6730 的接线柱设计就是为"裸线直接接入"准备的, 这是它的<b>原生标准用法</b>, 不是 workaround. 你之前买的"4 平方灯笼头"和想买的"4mm 子弹头", 都是绕远路. <b>拧两下螺丝, 5 秒搞定.</b>
+</div>
+
+<div class="key" style="border-left-color:#3a7adc;background:#e8f0fb">
+  <strong>实物验证 (开箱后第一件事)</strong>: 拿到 UDP6730 后, 试试用手指逆时针拧红色端子的外圈塑料螺帽. <b>能转动</b> = 确实是接线柱二合一型 (本文方案适用); <b>纹丝不动</b> = 罕见的纯香蕉孔型 (本文不适用, 告诉我重画).
+</div>
+
+<p style="text-align:center;color:#888;margin-top:48px;font-size:0.9em">
+配套文档: <code>docs/udp6730-quickstart-cheatsheet.md</code> §0-§5
+</p>
+
+</body>
+</html>

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>GUAGUA 模块连接架构图</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f6f8fb;
+    color: #1f2937;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1700px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 16px; }
+  h1 {
+    font-size: 26px;
+    color: #1e293b;
+    margin-bottom: 6px;
+  }
+  .subtitle { color: #64748b; font-size: 13px; }
+
+  /* 图例 */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+    padding: 12px 18px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    font-size: 12.5px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-line { width: 26px; height: 2px; display: inline-block; }
+  .legend-box { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+
+  /* SVG 容器 */
+  .diagram-wrap {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    overflow-x: auto;
+  }
+  svg.diagram {
+    display: block;
+    width: 100%;
+    min-width: 1500px;
+    height: auto;
+  }
+
+  /* 数据流说明表 */
+  .flows {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .flow-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border-left: 4px solid;
+  }
+  .flow-card.up { border-left-color: #3b82f6; }
+  .flow-card.down { border-left-color: #f59e0b; }
+  .flow-card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .flow-card.up h3 { color: #2563eb; }
+  .flow-card.down h3 { color: #d97706; }
+  .flow-card ol {
+    padding-left: 22px;
+    font-size: 12.5px;
+    color: #475569;
+    line-height: 1.8;
+  }
+  .flow-card code {
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #1e40af;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 28px;
+    color: #94a3b8;
+    font-size: 11.5px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>GUAGUA 模块连接架构图</h1>
+  <p class="subtitle">呱呱本体(Pi 3B+ on-device) ↔ WiFi ↔ 小智云端(xiaozhi.me) · 模块·功能·连线一图说清</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><span class="legend-box" style="background:#dbeafe;border:1px solid #3b82f6"></span> 硬件 / 物理设备</div>
+  <div class="legend-item"><span class="legend-box" style="background:#ede9fe;border:1px solid #8b5cf6"></span> 本地软件模块</div>
+  <div class="legend-item"><span class="legend-box" style="background:#fef3c7;border:1px solid #f59e0b"></span> 云端服务</div>
+  <div class="legend-item"><span class="legend-line" style="background:#3b82f6"></span> 音频流 (PCM)</div>
+  <div class="legend-item"><span class="legend-line" style="background:#f59e0b"></span> 控制 / MCP 调用</div>
+  <div class="legend-item"><span class="legend-line" style="background:#10b981"></span> 传感器反馈</div>
+  <div class="legend-item"><span class="legend-line" style="background:#ef4444"></span> 舵机控制信号</div>
+</div>
+
+<div class="diagram-wrap">
+<svg class="diagram" viewBox="0 0 1600 1180" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- 箭头 marker 定义 -->
+  <defs>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <!-- ======= 左侧:呱呱本体 大框 ======= -->
+  <rect x="20" y="40" width="940" height="1120" rx="16" fill="#f8fafc" stroke="#3b82f6" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="40" y="72" font-size="20" font-weight="700" fill="#1e40af">🦆 呱呱本体  (On-Device · Raspberry Pi 3B+)</text>
+  <text x="40" y="92" font-size="12" fill="#64748b">部署位置: 鸭子身体内部 · 网络: WiFi 2.4GHz 接入家用路由器 · 供电: 航模电池 4-7W</text>
+
+  <!-- ======= 顶部:传感器输入区 ======= -->
+  <text x="50" y="125" font-size="13" font-weight="600" fill="#475569">▼ 传感器输入</text>
+
+  <!-- 麦克风 -->
+  <g>
+    <rect x="50" y="135" width="190" height="90" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="145" y="160" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">🎤 麦克风</text>
+    <text x="145" y="180" font-size="11" fill="#475569" text-anchor="middle">USB / I2S 接入</text>
+    <text x="145" y="198" font-size="11" fill="#475569" text-anchor="middle">采集用户语音</text>
+    <text x="145" y="214" font-size="10.5" fill="#64748b" text-anchor="middle">16kHz PCM 流</text>
+  </g>
+
+  <!-- 摄像头 (可选) -->
+  <g>
+    <rect x="260" y="135" width="190" height="90" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="355" y="160" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">📷 摄像头 (可选)</text>
+    <text x="355" y="180" font-size="11" fill="#475569" text-anchor="middle">CSI / USB 接入</text>
+    <text x="355" y="198" font-size="11" fill="#475569" text-anchor="middle">视觉感知人脸/手势</text>
+    <text x="355" y="214" font-size="10.5" fill="#64748b" text-anchor="middle">S1+ 阶段才启用</text>
+  </g>
+
+  <!-- IMU 姿态 -->
+  <g>
+    <rect x="470" y="135" width="190" height="90" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="565" y="160" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">📊 IMU 姿态传感</text>
+    <text x="565" y="180" font-size="11" fill="#475569" text-anchor="middle">I2C 接入</text>
+    <text x="565" y="198" font-size="11" fill="#475569" text-anchor="middle">陀螺仪 + 加速度计</text>
+    <text x="565" y="214" font-size="10.5" fill="#64748b" text-anchor="middle">50Hz 反馈给 RL</text>
+  </g>
+
+  <!-- 关节反馈 -->
+  <g>
+    <rect x="680" y="135" width="260" height="90" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="810" y="160" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">⚙️ 舵机位置反馈</text>
+    <text x="810" y="180" font-size="11" fill="#475569" text-anchor="middle">ST3215 串口总线 (TTL)</text>
+    <text x="810" y="198" font-size="11" fill="#475569" text-anchor="middle">14 关节当前角度 + 力矩</text>
+    <text x="810" y="214" font-size="10.5" fill="#64748b" text-anchor="middle">50Hz 反馈给 RL</text>
+  </g>
+
+  <!-- ======= 中部:Pi 3B+ 主控大框 ======= -->
+  <rect x="50" y="260" width="890" height="610" rx="12" fill="#faf5ff" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="70" y="288" font-size="16" font-weight="700" fill="#6b21a8">🖥️ Pi 3B+ 主控 · 软件栈 (Linux + Python)</text>
+  <text x="70" y="305" font-size="11" fill="#7c3aed">ARM A53 4 核 1.4GHz · 1GB RAM · 不跑 LLM, 只跑客户端 + 控制循环</text>
+
+  <!-- py-xiaozhi 客户端 -->
+  <g>
+    <rect x="75" y="325" width="400" height="135" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="275" y="350" font-size="14" font-weight="700" fill="#5b21b6" text-anchor="middle">① py-xiaozhi 客户端 (Python)</text>
+    <line x1="85" y1="360" x2="465" y2="360" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="90" y="378" font-size="11.5" fill="#475569">• 拾音 → 流式上传到云端 WebSocket</text>
+    <text x="90" y="396" font-size="11.5" fill="#475569">• 接收云端 TTS 音频流 → 播放给 Speaker</text>
+    <text x="90" y="414" font-size="11.5" fill="#475569">• 接收云端 MCP 工具调用 → 转发给 guagua</text>
+    <text x="90" y="432" font-size="11.5" fill="#475569">• 心跳保活 / 设备配网 / OTA 升级</text>
+    <text x="90" y="452" font-size="10.5" fill="#7c3aed" font-style="italic">协议: WebSocket + Opus 编码 · 走标准小智设备协议</text>
+  </g>
+
+  <!-- guagua MCP Tools -->
+  <g>
+    <rect x="495" y="325" width="430" height="135" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+    <text x="710" y="350" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle">② guagua MCP 工具集 ⭐ (本项目核心交付)</text>
+    <line x1="505" y1="360" x2="915" y2="360" stroke="#fcd34d" stroke-width="1"/>
+    <text x="510" y="378" font-size="11.5" fill="#475569">• <tspan font-family="monospace" fill="#1e40af">walk_to(x, y)</tspan> · <tspan font-family="monospace" fill="#1e40af">turn(angle)</tspan> · <tspan font-family="monospace" fill="#1e40af">look_at(target)</tspan></text>
+    <text x="510" y="396" font-size="11.5" fill="#475569">• <tspan font-family="monospace" fill="#1e40af">express_emotion(happy/curious/sad)</tspan></text>
+    <text x="510" y="414" font-size="11.5" fill="#475569">• <tspan font-family="monospace" fill="#1e40af">wave_hand()</tspan> · <tspan font-family="monospace" fill="#1e40af">nod()</tspan> · <tspan font-family="monospace" fill="#1e40af">tilt_head()</tspan> ...</text>
+    <text x="510" y="432" font-size="11.5" fill="#475569">• 每个工具 = JSON Schema + Python 实现</text>
+    <text x="510" y="452" font-size="10.5" fill="#d97706" font-style="italic">这是云端 LLM 能"看到"和"调用"的鸭子能力清单</text>
+  </g>
+
+  <!-- Skill Layer -->
+  <g>
+    <rect x="75" y="475" width="850" height="115" rx="8" fill="#ede9fe" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="500" y="500" font-size="14" font-weight="700" fill="#5b21b6" text-anchor="middle">③ Skill Layer · 高层意图 → 底层指令 (Python)</text>
+    <line x1="85" y1="510" x2="915" y2="510" stroke="#c4b5fd" stroke-width="1"/>
+    <text x="90" y="530" font-size="11.5" fill="#475569">• 接收 MCP 工具调用 (例: walk_to(2m, 0)), 拆解为 50Hz 控制循环参数</text>
+    <text x="90" y="548" font-size="11.5" fill="#475569">• 计算 7 维 command 向量 [vx, vy, vyaw, head_pitch, head_yaw, ...] 送给 ONNX</text>
+    <text x="90" y="566" font-size="11.5" fill="#475569">• 表情关键帧调度: 读 YAML → 给 2× SG90 头眼舵机生成时序曲线</text>
+    <text x="90" y="583" font-size="11" fill="#7c3aed" font-style="italic">本项目自研模块, 把 LLM 决策"翻译"成机器能懂的低层指令</text>
+  </g>
+
+  <!-- ONNX RL 控制循环 -->
+  <g>
+    <rect x="75" y="605" width="850" height="135" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="2"/>
+    <text x="500" y="630" font-size="14" font-weight="700" fill="#6b21a8" text-anchor="middle">④ ONNX RL 50Hz 控制循环 (上游训练, 不重写不重训)</text>
+    <line x1="85" y1="640" x2="915" y2="640" stroke="#d8b4fe" stroke-width="1"/>
+    <text x="90" y="660" font-size="11.5" fill="#475569">• 输入: 7 维 command (来自 Skill) + 14 关节状态 (来自舵机反馈) + IMU 姿态</text>
+    <text x="90" y="678" font-size="11.5" fill="#475569">• 推理: BEST_WALK_ONNX_2.onnx (M2 后会替换成自家训练版本)</text>
+    <text x="90" y="696" font-size="11.5" fill="#475569">• 输出: 14 个关节目标角度 → 通过串口总线下发到 ST3215</text>
+    <text x="90" y="714" font-size="11.5" fill="#475569">• 频率: 50Hz 实时 (每 20ms 一帧, Pi 3B+ 实测 < 20ms)</text>
+    <text x="90" y="732" font-size="10.5" fill="#9333ea" font-style="italic">⛔ 红线: 应用层不可绕过此模块直接产关节角</text>
+  </g>
+
+  <!-- 通信总线 (USB / 串口 / I2C) -->
+  <g>
+    <rect x="75" y="760" width="850" height="95" rx="8" fill="#e0f2fe" stroke="#0ea5e9" stroke-width="1.5"/>
+    <text x="500" y="785" font-size="13" font-weight="700" fill="#075985" text-anchor="middle">⑤ 硬件通信总线 (Pi GPIO + USB)</text>
+    <text x="200" y="810" font-size="11" fill="#475569" text-anchor="middle">USB 音频卡</text>
+    <text x="200" y="825" font-size="10" fill="#64748b" text-anchor="middle">→ Mic / Speaker</text>
+    <text x="400" y="810" font-size="11" fill="#475569" text-anchor="middle">UART 串口总线</text>
+    <text x="400" y="825" font-size="10" fill="#64748b" text-anchor="middle">→ 14× ST3215</text>
+    <text x="600" y="810" font-size="11" fill="#475569" text-anchor="middle">GPIO PWM</text>
+    <text x="600" y="825" font-size="10" fill="#64748b" text-anchor="middle">→ 2× SG90</text>
+    <text x="800" y="810" font-size="11" fill="#475569" text-anchor="middle">I2C</text>
+    <text x="800" y="825" font-size="10" fill="#64748b" text-anchor="middle">→ IMU</text>
+  </g>
+
+  <!-- ======= 底部:执行器输出区 ======= -->
+  <text x="50" y="900" font-size="13" font-weight="600" fill="#475569">▼ 执行器输出</text>
+
+  <!-- Speaker -->
+  <g>
+    <rect x="50" y="910" width="200" height="90" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="150" y="935" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">🔊 扩音器 Speaker</text>
+    <text x="150" y="955" font-size="11" fill="#475569" text-anchor="middle">USB / 3.5mm 接入</text>
+    <text x="150" y="973" font-size="11" fill="#475569" text-anchor="middle">播放小智 TTS 语音</text>
+    <text x="150" y="990" font-size="10.5" fill="#64748b" text-anchor="middle">人话回复 + 提示音</text>
+  </g>
+
+  <!-- 14× ST3215 -->
+  <g>
+    <rect x="270" y="910" width="280" height="90" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="410" y="935" font-size="14" font-weight="700" fill="#991b1b" text-anchor="middle">🦿 14× ST3215 舵机</text>
+    <text x="410" y="955" font-size="11" fill="#475569" text-anchor="middle">两腿 (6) + 两臂 (8) 关节</text>
+    <text x="410" y="973" font-size="11" fill="#475569" text-anchor="middle">由 ONNX 50Hz 驱动</text>
+    <text x="410" y="990" font-size="10.5" fill="#64748b" text-anchor="middle">执行走路 / 转身 / 挥手</text>
+  </g>
+
+  <!-- 2× SG90 -->
+  <g>
+    <rect x="570" y="910" width="200" height="90" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5"/>
+    <text x="670" y="935" font-size="14" font-weight="700" fill="#991b1b" text-anchor="middle">👀 2× SG90 舵机</text>
+    <text x="670" y="955" font-size="11" fill="#475569" text-anchor="middle">头部 + 眼睛</text>
+    <text x="670" y="973" font-size="11" fill="#475569" text-anchor="middle">由表情 YAML 驱动</text>
+    <text x="670" y="990" font-size="10.5" fill="#64748b" text-anchor="middle">表情 / 注视</text>
+  </g>
+
+  <!-- LED 指示灯 (可选) -->
+  <g>
+    <rect x="790" y="910" width="150" height="90" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="865" y="935" font-size="14" font-weight="700" fill="#991b1b" text-anchor="middle">💡 LED (可选)</text>
+    <text x="865" y="955" font-size="11" fill="#475569" text-anchor="middle">GPIO 控制</text>
+    <text x="865" y="973" font-size="11" fill="#475569" text-anchor="middle">状态指示</text>
+    <text x="865" y="990" font-size="10.5" fill="#64748b" text-anchor="middle">配网/联网/思考</text>
+  </g>
+
+  <!-- 电源说明 -->
+  <g>
+    <rect x="50" y="1030" width="890" height="100" rx="8" fill="#fffbeb" stroke="#facc15" stroke-width="1.5"/>
+    <text x="495" y="1055" font-size="13" font-weight="700" fill="#854d0e" text-anchor="middle">🔋 供电与续航</text>
+    <text x="495" y="1078" font-size="11.5" fill="#475569" text-anchor="middle">航模电池(爱折腾配套) → 12V DC → 降压模块 → Pi 3B+ (5V) · ST3215 总线(7.4V) · SG90 (5V)</text>
+    <text x="495" y="1098" font-size="11" fill="#64748b" text-anchor="middle">持续工作 4-7W · 满电预计 30-60 分钟 (待实测) · 5/8-5/10 到货后做首次开机</text>
+  </g>
+
+  <!-- ======= 右侧:小智云端 大框 ======= -->
+  <rect x="990" y="40" width="590" height="1120" rx="16" fill="#fffbeb" stroke="#f59e0b" stroke-width="2" stroke-dasharray="8,5"/>
+  <text x="1010" y="72" font-size="20" font-weight="700" fill="#92400e">☁️ 小智云端 (xiaozhi.me / 虾哥后端)</text>
+  <text x="1010" y="92" font-size="12" fill="#a16207">S0 阶段直接用虾哥默认 · S2 切自建 xiaozhi-esp32-server · S3+ 切本地 Mac Mini</text>
+
+  <!-- WebSocket 网关 -->
+  <g>
+    <rect x="1010" y="120" width="550" height="100" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="1285" y="145" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle">📡 WebSocket 网关 (设备接入层)</text>
+    <line x1="1020" y1="155" x2="1550" y2="155" stroke="#fcd34d" stroke-width="1"/>
+    <text x="1020" y="175" font-size="11.5" fill="#475569">• 持久长连接, 维护呱呱设备的在线状态 (心跳)</text>
+    <text x="1020" y="193" font-size="11.5" fill="#475569">• 上行: 接收音频流; 下行: 推送 TTS 音频 + MCP 工具调用</text>
+    <text x="1020" y="211" font-size="10.5" fill="#a16207" font-style="italic">协议: WSS (TLS 加密) · 端点: wss://api.xiaozhi.me/...</text>
+  </g>
+
+  <!-- ASR -->
+  <g>
+    <rect x="1010" y="240" width="265" height="115" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="1142" y="265" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle">🎙️ ASR · 语音识别</text>
+    <line x1="1020" y1="275" x2="1265" y2="275" stroke="#fcd34d" stroke-width="1"/>
+    <text x="1020" y="295" font-size="11" fill="#475569">• 输入: 音频流 (PCM)</text>
+    <text x="1020" y="313" font-size="11" fill="#475569">• 输出: 用户说的话 (文字)</text>
+    <text x="1020" y="331" font-size="11" fill="#475569">• 流式 / 实时 (低延迟)</text>
+    <text x="1020" y="347" font-size="10.5" fill="#a16207" font-style="italic">虾哥默认引擎</text>
+  </g>
+
+  <!-- TTS -->
+  <g>
+    <rect x="1295" y="240" width="265" height="115" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="1427" y="265" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle">🗣️ TTS · 语音合成</text>
+    <line x1="1305" y1="275" x2="1550" y2="275" stroke="#fcd34d" stroke-width="1"/>
+    <text x="1305" y="295" font-size="11" fill="#475569">• 输入: LLM 回复文字</text>
+    <text x="1305" y="313" font-size="11" fill="#475569">• 输出: 合成音频 (PCM)</text>
+    <text x="1305" y="331" font-size="11" fill="#475569">• 可选音色 (人格化)</text>
+    <text x="1305" y="347" font-size="10.5" fill="#a16207" font-style="italic">虾哥默认引擎</text>
+  </g>
+
+  <!-- LLM 大脑 ⭐ -->
+  <g>
+    <rect x="1010" y="375" width="550" height="220" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="2.5"/>
+    <text x="1285" y="403" font-size="16" font-weight="700" fill="#854d0e" text-anchor="middle">🧠 LLM 大脑 ⭐ (鸭子的"思考中枢")</text>
+    <line x1="1020" y1="413" x2="1550" y2="413" stroke="#ca8a04" stroke-width="1"/>
+    <text x="1020" y="435" font-size="12" fill="#1f2937" font-weight="600">输入:</text>
+    <text x="1080" y="435" font-size="11.5" fill="#475569">用户说话文字 + 性格 System Prompt + 工具集 Schema</text>
+    <text x="1020" y="457" font-size="12" fill="#1f2937" font-weight="600">推理:</text>
+    <text x="1080" y="457" font-size="11.5" fill="#475569">DeepSeek / Qwen / 等大模型 API</text>
+    <text x="1020" y="479" font-size="12" fill="#1f2937" font-weight="600">输出:</text>
+    <text x="1080" y="479" font-size="11.5" fill="#475569">回复文字 + 决策要不要调 MCP 工具</text>
+    <line x1="1020" y1="495" x2="1550" y2="495" stroke="#fde68a" stroke-width="1" stroke-dasharray="3,3"/>
+    <text x="1020" y="515" font-size="11.5" fill="#475569">⚡ <tspan font-weight="600">性格注入</tspan>: 拟人化设定 / 陌生→熟悉关系建模</text>
+    <text x="1020" y="535" font-size="11.5" fill="#475569">⚡ <tspan font-weight="600">工具发现</tspan>: 读 guagua MCP Schema 知道能让鸭子做什么</text>
+    <text x="1020" y="555" font-size="11.5" fill="#475569">⚡ <tspan font-weight="600">多轮记忆</tspan>: S3 后接入 NeuroMemory 长期记忆</text>
+    <text x="1020" y="578" font-size="10.5" fill="#a16207" font-style="italic">这是真正的"大脑", Pi 3B+ 算力不够本地跑, 必须放云端</text>
+  </g>
+
+  <!-- MCP 工具调度 -->
+  <g>
+    <rect x="1010" y="615" width="550" height="125" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+    <text x="1285" y="640" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle">🔌 MCP 工具调度</text>
+    <line x1="1020" y1="650" x2="1550" y2="650" stroke="#fcd34d" stroke-width="1"/>
+    <text x="1020" y="670" font-size="11.5" fill="#475569">• LLM 决定要调工具 (例: <tspan font-family="monospace" fill="#1e40af">walk_to({x:2,y:0})</tspan>)</text>
+    <text x="1020" y="688" font-size="11.5" fill="#475569">• 调度器把工具调用打包成 JSON, 走 WebSocket 推给设备</text>
+    <text x="1020" y="706" font-size="11.5" fill="#475569">• 接收设备返回的工具执行结果 (成功/失败)</text>
+    <text x="1020" y="724" font-size="10.5" fill="#a16207" font-style="italic">MCP = Model Context Protocol</text>
+  </g>
+
+  <!-- 演进路径说明 -->
+  <g>
+    <rect x="1010" y="760" width="550" height="370" rx="10" fill="#fffbeb" stroke="#facc15" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <text x="1285" y="788" font-size="14" font-weight="700" fill="#854d0e" text-anchor="middle">🚀 云端演进路径 (System 2 独立推进)</text>
+    <line x1="1030" y1="800" x2="1540" y2="800" stroke="#fcd34d" stroke-width="1"/>
+
+    <text x="1030" y="826" font-size="12" font-weight="700" fill="#1e40af">S0 · 现在 ─ 跑通整机</text>
+    <text x="1030" y="844" font-size="11" fill="#475569">所有服务用虾哥默认, 不自建</text>
+    <text x="1030" y="860" font-size="11" fill="#475569">目标: 把 ASR / LLM / TTS / MCP 链路打通</text>
+
+    <text x="1030" y="888" font-size="12" font-weight="700" fill="#7c3aed">S1 · 下一步 ─ 自家 MCP 工具集</text>
+    <text x="1030" y="906" font-size="11" fill="#475569">替换 MCP 工具 = guagua 自家版本 (人格化)</text>
+    <text x="1030" y="922" font-size="11" fill="#475569">后端仍用 xiaozhi.me, 但 LLM 看到的是自家工具</text>
+
+    <text x="1030" y="950" font-size="12" font-weight="700" fill="#059669">S2 · 自建后端</text>
+    <text x="1030" y="968" font-size="11" fill="#475569">切到自建 xiaozhi-esp32-server (开源)</text>
+    <text x="1030" y="984" font-size="11" fill="#475569">自家 DeepSeek/Qwen API key, 成本和隐私可控</text>
+
+    <text x="1030" y="1012" font-size="12" font-weight="700" fill="#dc2626">S3+ · 本地大脑</text>
+    <text x="1030" y="1030" font-size="11" fill="#475569">Mac Mini/Studio 本地跑 LLM 推理</text>
+    <text x="1030" y="1046" font-size="11" fill="#475569">+ NeuroMemory 长期记忆系统</text>
+    <text x="1030" y="1062" font-size="11" fill="#475569">+ 完全离线可用</text>
+
+    <text x="1030" y="1095" font-size="10.5" fill="#a16207" font-style="italic">⚠️ 不能跳级直接做 S3, 必须按 S0→S1→S2→S3 推进</text>
+    <text x="1030" y="1113" font-size="10.5" fill="#a16207" font-style="italic">每一步都有可工作版本, 单点替换降低风险</text>
+  </g>
+
+  <!-- ======= 模块之间的连线 ======= -->
+  <!-- 注意:连线层放最后, 确保覆盖在框之上 -->
+
+  <!-- 麦克风 → py-xiaozhi -->
+  <path d="M 145 225 L 145 280 L 200 280 L 200 325" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="155" y="260" font-size="10" fill="#3b82f6" font-style="italic">音频流</text>
+
+  <!-- IMU → ONNX -->
+  <path d="M 565 225 L 565 605" fill="none" stroke="#10b981" stroke-width="1.8" marker-end="url(#arrow-green)" stroke-dasharray="5,3"/>
+  <text x="575" y="450" font-size="10" fill="#10b981" font-style="italic">姿态反馈</text>
+
+  <!-- 关节反馈 → ONNX -->
+  <path d="M 810 225 L 810 605" fill="none" stroke="#10b981" stroke-width="1.8" marker-end="url(#arrow-green)" stroke-dasharray="5,3"/>
+  <text x="820" y="400" font-size="10" fill="#10b981" font-style="italic">14 关节角度</text>
+
+  <!-- py-xiaozhi ↔ WebSocket (核心跨网络连接) -->
+  <path d="M 475 392 L 720 250 L 990 165" fill="none" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow-blue)"/>
+  <text x="640" y="280" font-size="11" fill="#3b82f6" font-weight="700">⬆ 音频上行 (WSS)</text>
+
+  <!-- WebSocket → py-xiaozhi (TTS / MCP 下行) -->
+  <path d="M 990 195 L 720 285 L 475 405" fill="none" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+  <text x="640" y="320" font-size="11" fill="#f59e0b" font-weight="700">⬇ TTS 音频 + MCP 调用</text>
+
+  <!-- WiFi 标识 -->
+  <g>
+    <circle cx="975" cy="180" r="20" fill="#fff" stroke="#0ea5e9" stroke-width="2"/>
+    <text x="975" y="186" font-size="14" text-anchor="middle">📶</text>
+  </g>
+
+  <!-- py-xiaozhi → guagua MCP Tools -->
+  <path d="M 475 395 L 495 395" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="442" y="385" font-size="9" fill="#f59e0b">MCP</text>
+
+  <!-- guagua MCP → Skill Layer -->
+  <path d="M 710 460 L 710 475" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="720" y="473" font-size="10" fill="#f59e0b">高层意图</text>
+
+  <!-- Skill Layer → ONNX -->
+  <path d="M 500 590 L 500 605" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="510" y="603" font-size="10" fill="#8b5cf6">7 维 command</text>
+
+  <!-- ONNX → 14 ST3215 (经由总线) -->
+  <path d="M 410 740 L 410 760 M 410 855 L 410 910" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+  <text x="420" y="757" font-size="10" fill="#ef4444">14 关节角</text>
+  <text x="420" y="888" font-size="10" fill="#ef4444">串口下发</text>
+
+  <!-- Skill Layer → 2 SG90 (表情) -->
+  <path d="M 670 590 L 670 760 M 670 855 L 670 910" fill="none" stroke="#ef4444" stroke-width="2.5" marker-end="url(#arrow-red)"/>
+  <text x="680" y="700" font-size="10" fill="#ef4444">表情关键帧</text>
+
+  <!-- py-xiaozhi → Speaker (TTS 播放) -->
+  <path d="M 150 460 L 150 760 M 150 855 L 150 910" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="160" y="600" font-size="10" fill="#3b82f6">TTS 音频</text>
+  <text x="160" y="888" font-size="10" fill="#3b82f6">USB 播放</text>
+
+  <!-- 云端内部连线 -->
+  <!-- WebSocket → ASR -->
+  <path d="M 1142 220 L 1142 240" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <!-- ASR → LLM -->
+  <path d="M 1142 355 L 1142 375" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="1148" y="370" font-size="10" fill="#f59e0b">文字</text>
+  <!-- LLM → TTS -->
+  <path d="M 1300 480 Q 1427 480 1427 355" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="1335" y="475" font-size="10" fill="#f59e0b">回复文字</text>
+  <!-- TTS → WebSocket -->
+  <path d="M 1427 240 Q 1427 230 1400 220" fill="none" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <!-- LLM → MCP 调度 -->
+  <path d="M 1285 595 L 1285 615" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="1295" y="610" font-size="10" fill="#f59e0b">工具调用决策</text>
+  <!-- MCP 调度 → WebSocket -->
+  <path d="M 1100 615 Q 1100 230 1150 220" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow-orange)" stroke-dasharray="4,3"/>
+  <text x="1050" y="500" font-size="10" fill="#f59e0b">MCP JSON</text>
+
+</svg>
+</div>
+
+<!-- 数据流文字说明 -->
+<div class="flows">
+
+  <div class="flow-card up">
+    <h3>⬆️ 上行数据流: 用户说话 → 小智听懂</h3>
+    <ol>
+      <li>用户对鸭子说话 → <code>🎤 麦克风</code> 拾音</li>
+      <li>USB 音频 → <code>py-xiaozhi</code> 拿到 PCM 流</li>
+      <li>Opus 编码 → <code>WiFi</code> → 云端 <code>WebSocket 网关</code></li>
+      <li>音频 → <code>ASR</code> 转成文字 ("你好呱呱~")</li>
+      <li>文字 + 性格 prompt + MCP 工具集 → 喂给 <code>LLM 大脑</code></li>
+    </ol>
+  </div>
+
+  <div class="flow-card down">
+    <h3>⬇️ 下行数据流: 小智说话 + 鸭子动作</h3>
+    <ol>
+      <li><code>LLM</code> 输出回复文字 + 决策要不要调工具</li>
+      <li>回复文字 → <code>TTS</code> 合成音频 → 经 <code>WebSocket</code> 推回设备 → <code>Speaker</code> 播放</li>
+      <li>(若调工具) MCP JSON → <code>WebSocket</code> → <code>py-xiaozhi</code> → <code>guagua MCP Tools</code></li>
+      <li><code>Skill Layer</code> 翻译 (例: walk_to → 7 维 command)</li>
+      <li><code>ONNX 50Hz</code> 推理 → 14 关节角 → <code>ST3215 舵机</code> 执行 (走/转/挥手)</li>
+      <li>同时 <code>Skill</code> 调表情 YAML → <code>2× SG90</code> 头眼表情</li>
+    </ol>
+  </div>
+
+</div>
+
+<footer>
+  GUAGUA 项目模块连接架构图 · 2026-05-18 · 接续会话先读 docs/m0-handoff-notes.md
+</footer>
+
+</div>
+</body>
+</html>
