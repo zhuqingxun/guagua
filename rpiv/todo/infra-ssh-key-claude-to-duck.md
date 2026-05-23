@@ -1,11 +1,25 @@
 ---
 title: "配 SSH key 让 Claude Code 直接 SSH 鸭子（不再复制粘贴中转）"
 type: todo
-status: open
+status: completed
 priority: high
 created_at: 2026-05-10T22:45:00
-updated_at: 2026-05-10T22:45:00
+updated_at: 2026-05-19T22:35:00
 ---
+
+## 完成记录 (2026-05-19 22:35)
+
+通道已建好, `ssh duck 'cmd'` 在 Claude Code Bash 工具内可直接执行, 鸭子已上电 + 联网。
+
+**实施 diff(与原方案的差异)**:
+- key 命名按本机规约 `id_ed25519_duck`(不是原 todo 写的 `id_ed25519`), 与现有 `_phone / _gitee / _github` 命名一致
+- ssh config 加 `Host duck` 别名 → 后续命令调用 `ssh duck '...'` 不需暴露 IP/user
+- pub key 推送用 `umask 077` 一行搞定权限(原 todo 写的 chmod 链超 120 字符)
+
+**踩坑记录** (沉淀到 [`~/.claude/rules/powershell-syntax.md`](file:///C:/Users/zqx/.claude/rules/powershell-syntax.md) 待办):
+- `ssh-keygen -N '""'` 在 PowerShell 工具中**会把字面 `""` 两字符当作 passphrase 写入私钥**, 不是空字符串。后续 `ssh -o BatchMode=yes duck` 会失败 `Permission denied (publickey,password)`, verbose 显示 `Server accepts key` 但客户端没法签名
+- 修复: `ssh-keygen -p -P '""' -N "" -f ~/.ssh/id_ed25519_duck` (用 Bash 工具, 不用 PowerShell)
+- 正确做法: PowerShell 工具调 native exe 传"真空字符串参数"时直接 `-N ""`(双引号空字符串), 不要 over-thinking 包单引号
 
 # 配 SSH key 让 Claude Code 直接操作鸭子
 

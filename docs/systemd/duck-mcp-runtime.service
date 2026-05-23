@@ -1,0 +1,33 @@
+[Unit]
+Description=Duck MCP Runtime - 50Hz RL 控制循环 + ONNX 推理 + ST3215 电机
+Documentation=file:///home/raspios/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts/v2_rl_walk_mujoco_mcp.py
+# Requires mcp-openduck.service 是因为本进程的 MCPController 连本地 ws://127.0.0.1:6789
+# (那是 mcp-openduck 进程开的 server). A 死 B 也死, 避免 silent failure (B 跑但 commands 永远 [0]*7)
+After=mcp-openduck.service
+Requires=mcp-openduck.service
+
+[Service]
+Type=simple
+User=raspios
+Group=raspios
+WorkingDirectory=/home/raspios/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts
+Environment=HOME=/home/raspios
+Environment=PATH=/home/raspios/venv_duck/bin:/usr/local/bin:/usr/bin:/bin
+# 关键: 默认 Python 在 systemd 下 stdout 进 block-buffered socket (8KB flush),
+# 导致 init 阶段 print 看不到/RL loop 50Hz [Controller] 日志全部卡 buffer.
+# PYTHONUNBUFFERED=1 强制行式刷新, 等价于 python -u.
+# (2026-05-23 18:40 加, 修 stdout 假死现象)
+Environment=PYTHONUNBUFFERED=1
+# 等 mcp-openduck 真在 :6789 listen (最多 30 秒). 不靠 systemd After= 单独保证,
+# 因为 mcp-openduck 启动后到真 listen 6789 之间有几秒 Python init 窗口
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 30); do ss -ltn | grep -q ":6789 " && exit 0; sleep 1; done; echo "FAIL mcp-openduck not listening on :6789 after 30s"; exit 1'
+# 直接调爱折腾的 start_duck_mcp.sh (内部 cd + source venv + python v2_rl_walk_mujoco_mcp.py --onnx_model_path ...)
+# 注意: 跑的是 guagua-customizations 分支的 v2_rl_walk_mujoco_mcp.py (含 PS4 fallback patch),
+# 所以无 PS4 手柄也能起来 (会 print [WARN] PS4 unavailable, using stub)
+ExecStart=/bin/bash /home/raspios/open_duck_mini_ws/mcp-openduck/start_duck_mcp.sh
+Restart=on-failure
+RestartSec=5
+# 日志走 journald: journalctl -u duck-mcp-runtime -f
+
+[Install]
+WantedBy=multi-user.target

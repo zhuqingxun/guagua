@@ -1,0 +1,44 @@
+From fbb17b7bf22eaba4e070e03794c4bdce34984113 Mon Sep 17 00:00:00 2001
+From: ncnynl <1043931@qq.com>
+Date: Sat, 23 May 2026 18:34:33 +0800
+Subject: [PATCH] fix: _StubPS4.get_last_command return 4-tuple match
+ PS4Controller
+
+Bug in 6f93be8: stub returned [0.0]*7 (single list),
+but merge_commands() in v2_rl_walk_mujoco_mcp.py:300 expects 4-tuple
+  (commands, buttons, left_trigger, right_trigger)
+matching PS4Controller.get_last_command in
+mini_bdx_runtime/ps4_controller.py:186-191.
+
+Result: ValueError too many values to unpack -> systemd restart loop
+when no PS4 joystick attached, blocking S0 #10 reboot-autostart verification.
+
+Now stub returns (np.zeros(7,float32), Buttons(), 0.0, 0.0).
+---
+ scripts/v2_rl_walk_mujoco_mcp.py | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/scripts/v2_rl_walk_mujoco_mcp.py b/scripts/v2_rl_walk_mujoco_mcp.py
+index c6f24ff..1abc97a 100644
+--- a/scripts/v2_rl_walk_mujoco_mcp.py
++++ b/scripts/v2_rl_walk_mujoco_mcp.py
+@@ -127,8 +127,15 @@ class RLWalk:
+             except Exception as _ps4_err:
+                 print(f"[WARN] PS4 unavailable, using stub: {_ps4_err}")
+                 class _StubPS4:
++                    def __init__(self):
++                        self._buttons = Buttons()
+                     def get_last_command(self):
+-                        return [0.0] * 7
++                        return (
++                            np.zeros(7, dtype=np.float32),
++                            self._buttons,
++                            0.0,
++                            0.0,
++                        )
+                 self.ps4_controller = _StubPS4()
+             
+         # Reference motion, but we only really need the length of one phase
+-- 
+2.39.5
+

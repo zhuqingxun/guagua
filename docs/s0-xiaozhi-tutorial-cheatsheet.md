@@ -105,6 +105,8 @@ INFO:OpenDuck:[Controller] {...}
 
 教程未提供成功输出样例。**判健康**：进程不闪退、不报 traceback 即可视为 OK；用喊话验收作真正判据。
 
+⚠️ **5/22 实战发现的硬约束 — 必插 USB 手柄**：`Open_Duck_Mini_Runtime/scripts/v2_rl_walk_mujoco_mcp.py:125` 强制初始化 `PS4Controller`，`pygame.joystick.Joystick(0)` 在无手柄时**立即闪退**报 `pygame.error: Invalid joystick device number`。爱折腾整机版默认不带手柄，必须自备任意一个 USB 手柄（PS4/PS5/Xbox/杂牌通用都行）插上才能跑。不需要操作手柄，只需要让 pygame 看到 device 0 存在。S1 阶段改自家 MCP 时务必加 try/except fallback to dummy controller。
+
 ### 启动顺序
 
 ```bash
@@ -184,9 +186,9 @@ ESP32 配网完了 → 验证码用过 → 想再用：
 2. ESP32 断电 → 上电 → 等"扫描 wi-fi"字样 → 按上方右侧按钮
 3. 屏幕显示新验证码
 
-### PS4 手柄代码（旁路警告）
+### PS4 手柄代码（5/22 升级：从"旁路警告"升为"强制依赖"）
 
-教程明确："不保证使用 XBOX 协议手柄能直接通用，请根据实际情况进行处理"。S0 阶段不涉及手柄，仅记录。
+教程明确："不保证使用 XBOX 协议手柄能直接通用，请根据实际情况进行处理"。**5/22 实战发现这不是"旁路警告"而是硬约束**：`start_duck_mcp.sh` 强制要求 USB 手柄存在（见上方 start_duck_mcp.sh 段）。S0 阶段必备任意 USB 手柄。S1 阶段重写时移除强制依赖。
 
 ---
 

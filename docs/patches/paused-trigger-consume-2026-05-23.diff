@@ -1,0 +1,38 @@
+From 1e5f7e5d4e63844c55381d0e67fab49a941c99c1 Mon Sep 17 00:00:00 2001
+From: ncnynl <1043931@qq.com>
+Date: Sat, 23 May 2026 19:25:18 +0800
+Subject: [PATCH] fix: consume A.triggered after paused toggle to prevent storm
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Bug: vendor 用物理按键脉冲语义设计 A.triggered, 但 LLM 模式下
+duck.start() 让 self.A_pressed=True 持续多帧 (没复位机制),
+broadcast 100ms 周期 + RLWalk 50Hz 主循环, update_if_changed 在
+is_pressed 不变时不替换 self.buttons -> self.buttons.A.triggered
+持续 True -> RLWalk 每帧 toggle paused -> 翻烧饼.
+
+Fix: 处理完 triggered 立刻 self.buttons.A.triggered = False (1 行).
+单次 toggle, paused 稳定切换. 保留 vendor Arm/Disarm 设计哲学.
+
+验证: ssh duck + python ws client 发 duck_start 之后 grep PAUSE/UNPAUSE,
+应只 1 次 UNPAUSE (而非 5+ 次翻烧饼).
+---
+ scripts/v2_rl_walk_mujoco_mcp.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/scripts/v2_rl_walk_mujoco_mcp.py b/scripts/v2_rl_walk_mujoco_mcp.py
+index 1abc97a..63bfebb 100644
+--- a/scripts/v2_rl_walk_mujoco_mcp.py
++++ b/scripts/v2_rl_walk_mujoco_mcp.py
+@@ -472,6 +472,7 @@ class RLWalk:
+                             print("PAUSE")
+                         else:
+                             print("UNPAUSE")
++                        self.buttons.A.triggered = False
+ 
+                 if self.paused:
+                     time.sleep(0.1)
+-- 
+2.39.5
+

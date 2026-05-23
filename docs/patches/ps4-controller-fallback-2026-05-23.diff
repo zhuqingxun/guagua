@@ -1,0 +1,33 @@
+# PS4Controller Fallback Patch
+# 应用文件: ~/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts/v2_rl_walk_mujoco_mcp.py
+# 应用时间: 2026-05-23 (S0 #10 reboot 自启准备阶段, S0 通关后)
+# 目的: 无 PS4 手柄时 fallback 到 stub, 解除 systemd 自启对蓝牙手柄的硬依赖
+# 备份位置 (鸭子上): scripts/v2_rl_walk_mujoco_mcp.py.bak.1779504837
+#
+# 背景:
+# - upstream Open_Duck_Mini_Runtime 第三个 commit 后没再 push, 这两个文件本身是爱折腾追加的 untracked
+# - 教训锚点 docs/s0-handoff-passed-2026-05-22.md 坑1: PS4Controller.__init__ 调
+#   pygame.joystick.Joystick(0), 无手柄即 raise pygame.error: Invalid joystick device number
+# - 5/22 通关靠插 USB 手柄绕过, S0 #10 reboot 验证需要永久解
+#
+# 回归方法: cp scripts/v2_rl_walk_mujoco_mcp.py.bak.<ts> scripts/v2_rl_walk_mujoco_mcp.py
+# Re-apply 方法: scp D:/tmp/patch_ps4_fallback.py duck:/tmp/ && ssh duck 'python3 /tmp/patch_ps4_fallback.py'
+
+--- scripts/v2_rl_walk_mujoco_mcp.py.bak.1779504837	2025-09-28 18:21:03.649985933 +0800
++++ scripts/v2_rl_walk_mujoco_mcp.py	2026-05-23 10:53:57.171884152 +0800
+@@ -122,7 +122,14 @@
+         if self.commands:
+             #self.xbox_controller = XBoxController(self.command_freq)
+             self.mcp_controller = MCPController()
+-            self.ps4_controller = PS4Controller(self.command_freq)
++            try:
++                self.ps4_controller = PS4Controller(self.command_freq)
++            except Exception as _ps4_err:
++                print(f"[WARN] PS4 unavailable, using stub: {_ps4_err}")
++                class _StubPS4:
++                    def get_last_command(self):
++                        return [0.0] * 7
++                self.ps4_controller = _StubPS4()
+
+         # Reference motion, but we only really need the length of one phase
+         # TODO

@@ -12,7 +12,7 @@
 | ✅ M3-W1 装配 | done | 5/7 21:22 装好支架 + 低压报警 |
 | ✅ M3-W1 首次开机 | done | 5/8 22:21 接电池 + 扫到 `openduckmini` 热点 |
 | ✅ M3-W1 行走测试 | done | 5/8 晚上跑通教程 6757 |
-| 🚧 M3-W2 S0 验收 | **进行中** | Step 1 ✅ (5/10) / Step 2 ✅ (回溯确认, 5/15) / Step 3 进行中 (5/10 晚 DNS+mcp ✅) / Step 4 待做 |
+| ✅ M3-W2 S0 验收 | **主体完成** | Step 1 ✅ (5/10) / Step 2 ✅ (5/15) / Step 3 ✅ (5/22 跑通) / Step 4 待做（录 demo + 备份 SD 卡） |
 
 ## 接下来要做的步骤（按用户确认顺序）
 
@@ -43,12 +43,23 @@
 - 估时：1-2h（需要专注时间块，不要碎片化）
 - 验收：用小智语音模块对鸭子说话，鸭子能识别 + 通过 MCP 调用动作
 - 触发条件：Step 1+2 完成 + 你有完整的 1-2h 空闲时间
-- **5/10 晚进度**：进行中
-  - ✅ 鸭子端 DNS 修复双层闭环（临时手改 + 永久 .network 防御性 DNS=223.5.5.5/119.29.29.29，避免未来装 systemd-resolved 后回退）
-  - ✅ mcp-openduck 仓库自检通过（HEAD 最新 / pip 依赖全装好 / 4 关键脚本齐：start_mcp / start_duck_mcp / mcp_point_example / openduck.py）
-  - ✅ 接手文档 + 教程 6827 cheatsheet 已写（[`s0-handoff-xiaozhi-voice-2026-05-10.md`](./s0-handoff-xiaozhi-voice-2026-05-10.md) + [`s0-xiaozhi-tutorial-cheatsheet.md`](./s0-xiaozhi-tutorial-cheatsheet.md)）
-  - ⏳ 待做物理活：拆 ESP32-S3 包 + 注册 xiaozhi.me 账号 + ESP32 配网 + 控制台拿 wss URL + start_mcp 启动 + 喊话验收 + reboot 验证
+- **5/10 晚进度（已归档）**：DNS 修复双层闭环 + mcp-openduck 仓库自检
+- **5/22 晚跑通**：✅ S0 验收通过
+  - ✅ 拆 ESP32-S3 包 + 注册 xiaozhi.me（`+86 135****4082`）+ 用另一台电脑连 ESP32 热点(`192.168.4.1`)配 `1101` 2.4G WiFi 成功
+  - ✅ xiaozhi.me 默认智能体自动绑定 ESP32（音色"湾湾小何" / 模型"小智 Lite" / agentId=1886229）+ 拿 MCP 接入点 wss URL
+  - ✅ PC 端 `D:/tmp/mcp_point.sh` → scp 单行传到鸭子 → head -c 80 验证落地 OK
+  - ✅ 第一个 SSH 跑 `start_mcp.sh` 正常（看到 `INFO:OpenDuck:[Controller]` 心跳）
+  - ⚠️ 第二个 SSH 跑 `start_duck_mcp.sh` 闪退于 PS4 手柄初始化 → 插任意 USB 手柄绕过（**见下方踩坑详情**）
+  - ✅ 喊话能用小智控制鸭子做动作 — "听到→听懂→MCP→做动作"闭环打通
+  - ⏳ 剩两件：(1) **rotate wss URL token**（已进入对话上下文，视为泄漏）(2) reboot 验证整套自启
+- **PS4 手柄踩坑**（5/22 新增 — S1 阶段务必处理）：
+  - 文件：`Open_Duck_Mini_Runtime/scripts/v2_rl_walk_mujoco_mcp.py:125` 调 `PS4Controller(self.command_freq)`
+  - 错误：`PS4Controller.__init__` line 40 调 `pygame.joystick.Joystick(0)` 失败 → `pygame.error: Invalid joystick device number`
+  - 根因：爱折腾整机版默认**不带手柄**，出厂代码 vs 出厂硬件不匹配
+  - 临时方案：跑 `start_duck_mcp.sh` 前**必插 USB 手柄**（任意手柄都行，pygame 只需要 device 0 存在）
+  - S1 阶段修法：自家 MCP 实现里给 PS4Controller 加 try/except，无手柄时 fallback to dummy controller
 - 注意：S0 = 用爱折腾出厂的 MCP + xiaozhi.me 后端，**不替换为自家 MCP**（违反 CLAUDE.md 红线）。自家版本是 S1+ 的事。
+- 接手 handoff：[`s0-handoff-passed-2026-05-22.md`](./s0-handoff-passed-2026-05-22.md)（5/22 通关详情 + 剩余 token rotate / reboot 验证步骤）
 
 ### Step 4️⃣ 录 demo 视频 + 备份 SD 卡
 

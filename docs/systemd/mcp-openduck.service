@@ -1,0 +1,23 @@
+[Unit]
+Description=MCP-OpenDuck WebSocket bridge - 维持到 xiaozhi.me 的 wss + 本地 :6789 server
+Documentation=file:///home/raspios/open_duck_mini_ws/mcp-openduck/ https://github.com/zhuqingxun/guagua-docs/duck-workspace-state.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raspios
+Group=raspios
+WorkingDirectory=/home/raspios/open_duck_mini_ws/mcp-openduck
+Environment=HOME=/home/raspios
+Environment=PATH=/home/raspios/venv_duck/bin:/usr/local/bin:/usr/bin:/bin
+# 同 duck-mcp-runtime: systemd 下 stdout block-buffered 会让 print 假死, 强制 unbuffered
+Environment=PYTHONUNBUFFERED=1
+# 直接调爱折腾的 start_mcp.sh (内部 cd + source venv + source mcp_point.sh + python3 mcp_pipe.py openduck.py)
+ExecStart=/bin/bash /home/raspios/open_duck_mini_ws/mcp-openduck/start_mcp.sh
+Restart=on-failure
+RestartSec=5
+# 日志走 journald: journalctl -u mcp-openduck -f
+
+[Install]
+WantedBy=multi-user.target
