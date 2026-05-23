@@ -24,8 +24,8 @@
 
 | 名 | URL | 用途 |
 |---|---|---|
-| `origin` | github.com/apirrone/Open_Duck_Mini_Runtime | upstream (爱折腾 fork 自此, **不动**) |
-| ~~`origin-github`~~ | git@github.com:zhuqingxun/guagua-duck-runtime-vendor.git | **🚧 deferred** (本会话只做本地, push 走 GitHub, 见 rpiv todo `[deferred] 配 GitHub remote`) |
+| `origin` | https://github.com/apirrone/Open_Duck_Mini_Runtime | upstream (爱折腾 fork 自此, **只 fetch**, 不 push) |
+| `origin-gitee` | git@gitee.com:sean515/guagua-duck-runtime-vendor.git | **✅ 备份 push 目标** (2026-05-23 19:55 部署). 私有仓库, 两个分支 (`vendor-baseline-2026-05-23` + `guagua-customizations`) 均已 push. 鸭子端 `~/.ssh/id_ed25519_gitee` ed25519 SSH key 已加到 Gitee 账户 (sean515) |
 
 ### Branches
 
@@ -130,3 +130,4 @@ ssh duck 'cd ~/open_duck_mini_ws/Open_Duck_Mini_Runtime && git reflog show vendo
 - 2026-05-23 - 朱庆勋 - 首版, S0 通关后建立 vendor baseline 工程纪律, Runtime 仓库 baseline + customization 双分支化 + Gitee 私有备份
 - 2026-05-23 - 朱庆勋 - 增 `fbb17b7` fix commit 入 Patch 列表 (修 6f93be8 regression). 经验: vendor patch 必须 grep 调用方下游消费方式, 不能只看构造函数;否则会引入 stub 数据结构不匹配 regression
 - 2026-05-23 - 朱庆勋 - 增 `1e5f7e5` fix commit (paused trigger consume); systemd unit 加 `PYTHONUNBUFFERED=1`. S0 #10 LLM-MCP 模式喊"前进"实测鸭子动. **重要发现**: vendor LLM 模式从未真正端到端测试过——PS4 模式按 X(=A) 是物理按键脉冲,LLM 调 duck_start 是状态持续,二者语义不等价导致 paused storm。卖家 demo 应该全程 PS4 手柄,未触达此 bug。**经验**: 接手 vendor 代码时,**新模式 (LLM/voice) 必须端到端验证至物理动作**,不能只看 mcp tool 调用响应。本会话 4 个独立 bug 串联(PS4 crash → PYTHONUNBUFFERED → paused storm → duck_pause vendor bug 未修),靠 advisor + 用户 domain knowledge ("X 键解锁") 才定位
+- 2026-05-23 19:55 - 朱庆勋 - **Runtime 备份 Gitee 已部署** (从 5/23 早 handoff v1 "deferred GitHub" 改成 Gitee). 两个分支 `vendor-baseline-2026-05-23` (0671b96) + `guagua-customizations` (1e5f7e5) push 到 `gitee.com:sean515/guagua-duck-runtime-vendor` 私有仓库. Gitee API v5 自动化路径 (Bitwarden PAT → 加 SSH key → 创建仓库) 5/1 已沉淀模板, 本次复用. 鸭子端 SSH key id_ed25519_gitee 已加 Gitee (id=5799928). SD 卡损坏现可走 §5 灾难恢复 SOP 从 Gitee 恢复
