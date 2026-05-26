@@ -1,11 +1,28 @@
 ---
-title: "[M3-S0] walk 地面承重右脚 stall 真因 - 限流已实测否定"
+title: "[M3-S0] walk 地面承重右脚 stall 真因 - 锁定 right_knee (ID 13) 物理故障"
 type: issue
-status: open
+status: in-progress
 priority: high
 created_at: 2026-05-26T21:30:00
-updated_at: 2026-05-26T21:30:00
+updated_at: 2026-05-26T23:10:00
 ---
+
+## 🎯 2026-05-26 23:05 真因锁定
+
+**right_knee (ID 13) 物理故障** (假设 I 机械卡阻 / 假设 F 过热)
+
+证据 (按强度):
+1. 两次 walk 热分布 reproducible: knee Δ=+8°C 完全一致 (排除偶发误差)
+2. ID 13 残留 current 9→14 (其他 leg ID 0-2): 持续力矩饱和直接证据
+3. ID 13 load 188 vs ID 23 load 61: 3x 不对称
+4. 5 个症状全匹配: 右腿迈不开 / 鸭子向右转 / 嗡嗡声 / paused 地上倒 / 5/22 起恶化
+
+待 verify 子假设:
+- A: ID 13 舵机个体故障 (最可能, swap test 验证)
+- B: right_knee 位置机械装配应力 (次可能, swap test 验证)
+- C: 上游 right_hip 传导应力 (弱否定, right_hip 温度未异常)
+
+下一步: 详见 handoff-2026-05-26-v6.md
 
 # Walk 地面承重时右脚 stall - 限流根因排除后的新假设清单
 
@@ -38,9 +55,20 @@ updated_at: 2026-05-26T21:30:00
 - 5/26 verify: 按 X unpause + 不推 stick = 鸭子腿不动
 - handoff v4 §"task #4 真凶锁定" 描述的 "commands=0 仍输出 + 倒" 可能是 obs dim 时代的伪现象, 修了 obs dim 后消失
 
-### ❌ 装配假设 (5/24 已用户事实校正)
+### ❌ 装配假设 (5/24 已用户事实校正) — ⚠️ 部分作废 (2026-05-26 22:30 advisor 提醒)
 - 用户事实: "鸭子买回来一直能走", 装配没变过
 - 否定 "右脚某关节螺丝松动" 类假设
+- ⚠️ **advisor 2026-05-26 22:30 提醒**: 5/22 之后 walk 测试反复跌倒/冲击可能累积机械损伤, "5/22 一直能走" 不能完全排除当前状态。新增 **假设 I (机械不对称)** 见下
+
+### ❌ 假设 H 软件 joints_offsets 不对称 (2026-05-26 22:00-22:30 已 verify)
+- 触发: ncnynl 6737 舵机配置教程引出 soft_offsets 路径
+- verify 方法: ssh duck cat `~/duck_config.json` + grep `init_pos` / `zero_pos` in `rustypot_position_hwi.py`
+- 结果: `joints_offsets` 数值符号**完全符合** vendor sign convention:
+  - hip_yaw / hip_roll / hip_pitch: **镜像** (init_pos ±0.002 / ±0.053 / ±0.63) — joints_offsets 也镜像 (-0.30/+0.30 等)
+  - knee / ankle: **同号** (init_pos +1.368/+1.368, -0.784/-0.784) — joints_offsets 也同号 (+0.20/+0.20)
+- 结论: joints_offsets 不是 bug
+- 副发现: `polynomial_coefficients.pkl` 是 RL 参考动作 PolyReferenceMotion 类的多项式拟合, 跟硬件无关, 排除
+- 副发现: `scripts/duck_config.json` 是 symlink → `/home/raspios/duck_config.json`, DuckConfig 单一 load 路径 verified
 
 ## 新假设清单 (按 likelihood 排序, 下次会话逐一 verify)
 
@@ -94,15 +122,44 @@ kps[5:9] = [8, 8, 8, 8]      # neck + head 低 KP
 ### G. ONNX policy 本身在 corner case 出错 (low)
 **信号**: ONNX 训练分布外的 obs 组合可能让模型输出奇异 action。但这个排查成本高 (需 onnx 内部 weight 分析), 留作 last resort。
 
-## 下次会话起手
+### H'. joints_offsets 已过期 / 鸭子运输/磕碰漂移 (medium - 5/26 22:30 升级)
+**信号**: 当前 duck_config.json 是爱折腾出厂校准 + 用户可能历史跑过 find_soft_offsets.py。但 5/22 起反复 walk + 跌倒, zero 位置可能漂移, 需重新校准。
 
-按 likelihood 优先级:
+**verify 方法**:
+- ssh duck 上跑 `scripts/find_soft_offsets.py` (但需要 stop 服务 + 物理操作: disable_torque 后手动把鸭子摆到 zero 姿势)
+- 比对脚本给出的新 offset vs 当前 duck_config.json 各关节 diff
+- 任何 diff > 0.05 rad (~3°) → 重写 duck_config.json + 重测 walk
 
-1. **复读本 todo** + handoff-2026-05-26-v5 (会有)
-2. 优先调用 advisor (新会话冷启动, 把整 transcript + 假设清单交给 advisor 评估优先级)
-3. 先做假设 A (KP 不平衡 - 静态参数检查): ssh duck cat vendor + check pkl files
-4. 然后 B (sim2real - 查 github issues + Discord)
-5. 如果 A + B 都不命中, 走 C/D (加 debug print + 录 walk 5 秒 telemetry 离线分析)
+### I. 机械不对称 / 右腿铰链 / 齿轮磨损 (medium - 5/26 22:30 advisor 提出)
+**信号**: 5/22 起 walk 反复跌倒, 右腿冲击累积可能让铰链松 / 螺丝松 / ID 13 right_knee 或 ID 14 right_ankle 齿轮内部磨损。用户 "5/22 一直能走" 不能完全排除当前状态。
+
+**verify 方法** (advisor 建议在 A + instrumentation 后做):
+- 物理检查: 用手按左右腿每个关节, 对比转动阻尼 + 是否有间隙松动
+- 用手把左右腿每个关节摆到极限位置, 对比 range of motion 是否对称
+- 拆开看 ID 13/14 齿轮有无可见磨损 (last resort, 拆装风险)
+
+## 下次会话起手 (2026-05-26 22:30 advisor 重排后)
+
+**核心洞察 (advisor)**: 一次 5 秒 walk 录制 `[commands → RL action[14] → motor_targets[14] → present_position[14]]` 可一次性区分 5 个假设 (B/C/D/G + A), 比逐个 verify 高效。
+
+按 cost ascending:
+
+1. **A: check_motors_params.py 只读检查** (最便宜, 5 分钟):
+   - `sudo systemctl stop duck-mcp-runtime mcp-openduck`
+   - `cd ~/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts && ~/venv_duck/bin/python check_motors_params.py`
+   - 期望: 14 个 ID 全部 P=32 / I=0 / D=0 / mode=0
+   - 任一 diverge → 假设 A 命中, 直接 set_*_coefficient 写回 32 + 重测
+
+2. **instrumentation v2_rl_walk_mujoco_mcp.py 加 logging** (10-30 分钟, advisor 主推):
+   - 在 main control loop 加 `[t, commands, action14, motor_targets14, present_pos14]` append-to-file
+   - 走 5 秒 + ssh-cat log + diff 左右 paired IDs
+   - 一次区分 5 个假设 B/C/D/G + A
+
+3. **H': find_soft_offsets.py 重校准** (要 disable_torque + 物理摆位, 风险较高, A + instrumentation 之后做)
+
+4. **I: 机械不对称物理检查** (advisor 兜底, A + instrumentation 都清白后做)
+
+5. **B: GitHub apirrone issues + Discord 调研** (并行可做)
 
 ## 调试工具清单 (本 issue 可用)
 
