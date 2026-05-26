@@ -1,0 +1,38 @@
+commit b7d15297a830a5978229879005787e885297022b
+Author: ncnynl <1043931@qq.com>
+Date:   Sun May 24 23:00:51 2026 +0800
+
+    chore: 注释耳朵随机动功能 (随机动太频繁太吵)
+    
+    用户反馈 2026-05-24: 耳朵 SG90 随机动太频繁, 声音太大, 影响 walk 调试.
+    根因: PS4 trigger idle 时仍以 50Hz 写 PWM 给 SG90, trigger 噪声 + 漂移
+    导致持续微调 → buzz + 微抖动. 注释 v2_rl_walk_mujoco_mcp.py 主循环
+    调用点, antennas.py 实现保留以备 LLM 模式恢复.
+
+diff --git a/scripts/v2_rl_walk_mujoco_mcp.py b/scripts/v2_rl_walk_mujoco_mcp.py
+index 63bfebb..0558e33 100644
+--- a/scripts/v2_rl_walk_mujoco_mcp.py
++++ b/scripts/v2_rl_walk_mujoco_mcp.py
+@@ -457,13 +457,15 @@ class RLWalk:
+                             self.sounds.play_random_sound()
+                             print("Play random sound.")
+ 
+-                    if self.duck_config.antennas:
+-                        # print("left_trigger:",left_trigger)
+-                        # print("right_trigger:",right_trigger)
+-                        self.antennas.set_position_left(left_trigger)
+-                        self.antennas.set_position_right(right_trigger)
+-                        if(left_trigger > 0.1 or right_trigger > 0.1):
+-                          print(f"Left ear (L2): {left_trigger:.2f}, Right ear (R2): {right_trigger:.2f}")
++                    # disabled-2026-05-24: PS4 trigger idle 时持续 PWM 写入 SG90 导致 buzz + 微抖动
++                    # 用户反馈耳朵"随机动太频繁声音太大", antennas.py 实现保留以备 LLM 模式恢复
++#                     if self.duck_config.antennas:
++#                         # print("left_trigger:",left_trigger)
++#                         # print("right_trigger:",right_trigger)
++#                         self.antennas.set_position_left(left_trigger)
++#                         self.antennas.set_position_right(right_trigger)
++#                         if(left_trigger > 0.1 or right_trigger > 0.1):
++#                           print(f"Left ear (L2): {left_trigger:.2f}, Right ear (R2): {right_trigger:.2f}")
+ 
+                     if self.buttons.A.triggered:
+                         print("self.buttons.A.triggered")

@@ -1,0 +1,101 @@
+From 26c4cc6f2cb55ba4895d8386ca373cf118e3cc5c Mon Sep 17 00:00:00 2001
+From: sean515 <zhuhoddy@gmail.com>
+Date: Tue, 26 May 2026 20:44:04 +0800
+Subject: [PATCH] =?UTF-8?q?fix(ps4=5Fcontroller):=20PS4Controller=20?=
+ =?UTF-8?q?=E4=BF=AE=E4=B8=A4=E4=B8=AA=20hotplug=20v1=20=E6=AE=8B=E7=95=99?=
+ =?UTF-8?q?=20bug=20(vendor=20=E7=AC=AC=205+6=20bug)?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+vendor 第 5 bug (obs dim concat → ONNX InvalidArgument crash)
+========================================================================
+现象: 20916cb hotplug v1 落地后, 场景 2 (运行中 attach) 触发 ONNX
+InvalidArgument: Got 108 Expected 101 → systemd restart loop。
+
+根因 (debug print 实证, 5 步因果链):
+  1. PS4Controller.__init__ self.last_commands = [0.0] * 7  (Python list)
+  2. attach 后第一帧, commands_worker 还没 push 到 cmd_queue
+  3. get_last_command() attached path 走 cmd_queue.get(False) → Empty
+     → except 静默, 不改 self.last_commands → 仍是 list[7]
+  4. MCPController.get_last_command() return self.commands[:] = list[7]
+  5. merge_commands: m_last (list) + p_last (list) = list concat → list[14]
+     (不是 element-wise add!)
+  6. np.clip(list[14], -1, 1) = ndarray[14] → self.last_commands = 14 维
+  7. 下一帧 cmds = 14 维 → obs = 108 维 → ONNX expect 101 → crash
+
+实证 (debug print 拿到 OBS_DBG):
+  attach 前 (stub): shape=(101,) cmds=7 (PS4 stub 直接返 ndarray 绕过 list)
+  attach 后 (1 帧):  shape=(108,) cmds=14 (list+list concat 现形)
+
+修复: __init__ self.last_commands 改 np.zeros(7, dtype=np.float32),
+从源头杜绝 list type 漂移。一行改动。
+
+vendor 第 6 bug (JOYDEVICEREMOVED 永不触发 detach)
+========================================================================
+现象: 修第 5 bug 后场景 4 (运行中 detach, bluetoothctl disconnect) service
+能继续跑不 crash 但 [PS4Controller] Detached 永不出, /dev/input/js gone
+后 service 仍认为 _attached=True。
+
+根因: 20916cb 注释错误 - pygame.event.get() 是 destructive read,谁先
+pump 谁拿事件。commands_worker 跑 command_freq (>=20Hz) 抢先 drain SDL
+event queue, main loop 每 25 帧 ~2Hz pump 永远拿不到 REMOVED 事件。
+主循环的 JOYDEVICEREMOVED handler 形同虚设。
+
+修复: get_commands() event loop 第一个 if 处理 REMOVED 自调 self.detach()
++ raise pygame.error 让 commands_worker except 同步处理 (idempotent).
+main loop 那侧的 REMOVED handler 保留作双保险, 不抢先 main loop 的 ADDED
+路径 (ADDED 在 _attached=False 时 commands_worker 跳过 get_commands → 不
+争 event queue → main loop 独占, 仍工作).
+
+验证 (2026-05-26 20:30-20:43, 完整 hotplug 4 场景闭环)
+========================================================================
+- 场景 1 (启动无手柄 stub): handoff 5/24 23:23 已 verify
+- 场景 2 (运行中 attach):   ✅ 本次 verify Attached + InvalidArgument=0
+- 场景 3 (启动有手柄):       handoff 5/24 23:24 已 verify
+- 场景 4 (运行中 detach):    ✅ 本次 verify Detached×2 (双保险) + svc active
+- re-attach 闭环:           ✅ detach 后 PS 键再连 → Attached 再次触发
+
+debug print 在 v2_rl_walk_mujoco_mcp.py 加了一行后已回滚, 本 commit 不含。
+---
+ .../mini_bdx_runtime/ps4_controller.py           | 16 ++++++++++------
+ 1 file changed, 10 insertions(+), 6 deletions(-)
+
+diff --git a/mini_bdx_runtime/mini_bdx_runtime/ps4_controller.py b/mini_bdx_runtime/mini_bdx_runtime/ps4_controller.py
+index 67f48b5..4841afc 100644
+--- a/mini_bdx_runtime/mini_bdx_runtime/ps4_controller.py
++++ b/mini_bdx_runtime/mini_bdx_runtime/ps4_controller.py
+@@ -31,7 +31,7 @@ class PS4Controller:
+         self.only_head_control = only_head_control
+ 
+         # 7 command outputs: [vx, vy, yaw, neck_pitch, head_pitch, head_yaw, head_roll]
+-        self.last_commands = [0.0] * 7
++        self.last_commands = np.zeros(7, dtype=np.float32)
+         self.last_left_trigger = 0.0
+         self.last_right_trigger = 0.0
+ 
+@@ -152,12 +152,16 @@ class PS4Controller:
+             last_commands[5] = scale(head_yaw, HEAD_YAW_RANGE)
+             last_commands[6] = scale(head_roll, HEAD_ROLL_RANGE)
+ 
+-        # Handle button events
+-        # NOTE: pygame.event.get() also drains JOYDEVICEADDED/REMOVED events.
+-        # Main loop also calls pygame.event.get() at ~2Hz to handle hotplug;
+-        # both consumers see different snapshots but that is OK -- hotplug events
+-        # are only relevant in the main loop, button events only here.
++        # Handle pygame events. NOTE: pygame.event.get() is destructive read --
++        # whichever consumer pumps first wins the events. commands_worker runs at
++        # command_freq (>= 20Hz) and main loop pumps only at ~2Hz, so worker drains
++        # the queue first. Must handle JOYDEVICEREMOVED here too -- otherwise the
++        # event gets drained by worker but only main loop knew to call detach(),
++        # so detach never fires (vendor bug 6, 2026-05-26).
+         for event in pygame.event.get():
++            if event.type == pygame.JOYDEVICEREMOVED:
++                self.detach()
++                raise pygame.error("Controller removed (JOYDEVICEREMOVED)")
+             if event.type == pygame.JOYBUTTONDOWN:
+                 if self.p1.get_button(0):  # X Button: paused
+                     self.A_pressed = True
+-- 
+2.39.5
+
