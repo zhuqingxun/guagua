@@ -78,6 +78,7 @@ data/processed/
 
 # ─── Playwright CLI 会话临时数据 ──────────────────
 .playwright-cli/
+.playwright-mcp/
 
 # ─── 临时调试截图（不入库） ─────────────────────
 router-*.png
