@@ -1,107 +1,94 @@
-# 鸭子 PS4 (DS4) 手柄连接 — ds4drv 驱动恢复
+# 鸭子 PS4 (DS4) 手柄连接 — 根因最终结论 + 标准恢复流程
 
-**创建**: 2026-06-07 (系统重置后重配手柄会话)
-**状态**: ds4drv 已修复能建 js0 + 连上手柄; 卡在蓝牙信号弱(14 reports/s), 待手柄充电后验证
+**最后更新**: 2026-07-01（根因复核完成 + 真机走路验证通过）
+**状态**: ✅ 根因已锁定并复核，标准流程已固化，走路测试通过
 
-> ⚠️⚠️ **本文档根因已过时, 待改写 (2026-06-07 晚更新, 见 `rpiv/handoff-2026-06-07-v8.md`)** ⚠️⚠️
-> - 真根因**不是**"信号弱"也**不是** ds4drv 问题。手柄已彻底连通 + reboot 持久化验证通过(js0 真实输入 125 事件/6秒)
-> - **不需要 ds4drv**: 内核 `hid_sony` + `joydev`(modules-load.d 自启)直接建 js0
-> - 真手柄 MAC = `A0:5A:5F:0A:0F:2C`(btmon 实锤); 是**副厂 DS4**(PID 漂移 + inquiry 扫不到只能 page)
-> - 连通方式: `bt-agent -c NoInputNoOutput`(Just Works) + `hcitool cc` 直连 + `bluetoothctl pair`
-> - **但"标准 bluetoothctl 撞 MITM"这个结论尚未对照验证**(我测的是一次性命令, 卖家官方文档 ncnynl 6745 用的是交互式 shell, 待复核)
-> - 下方"信号弱/转 USB"等内容**全部作废**, 仅作历史保留
+> 本文档此前(2026-06-07)有两版错误假设("蓝牙信号弱/需转 USB"、"需要 ds4drv 驱动")，均已否定。历史假设不再保留在本文档中，需要考古见 git blame（关键词 `ds4drv` / `信号弱`）。以下是唯一权威结论。
 
 ---
 
-## 一、核心原理 (2026-06-07 完整诊断, 多假设逐一验证后锁定)
+## 一、核心事实
 
-### js0 唯一来源 = ds4drv (不是内核)
+| 项 | 值 |
+|---|---|
+| 真手柄 MAC | `A0:5A:5F:0A:0F:2C`（btmon 实锤，17 次主动 Connect） |
+| 硬件性质 | **副厂 DS4 兼容手柄**（`Modalias: usb:v054Cp05C4d0100`，PID 会在 05C4/09CC 间漂移） |
+| 蓝牙可发现性 | **inquiry scan 扫不到**（`btmgmt find` / `hcitool scan` / `bluetoothctl scan on` 全部失败，贴 5cm 也不行）。但**可 page（可被动接受连接）** |
+| 手柄配对模式 | Share + PS 同时长按至指示灯**快速闪烁** |
+| js0 来源 | **内核原生** `hid_sony` + `joydev`（由 `/etc/modules-load.d/duck-ps4.conf` 开机自启加载）直接创建，**不需要 ds4drv** |
 
-- 鸭子内核**没有 joydev 模块**: `modules.builtin` 只有 `hid-generic.ko`; `modinfo joydev/hid_sony/hid_playstation` 全部无 filename
-- 所以**内核无法创建 `/dev/input/js*`** —— 不管蓝牙连不连、重不重启都不会有 js0
-- vendor 代码 (`Open_Duck_Mini_Runtime/.../ps4_controller.py`) 用 `pygame.joystick.Joystick(0)` 读 `/dev/input/js0`
-- **js0 必须由 `ds4drv` 用 uinput 创建** (`99-uinput.rules` 给 uinput 权限)
-- ds4drv 在 `/usr/local/bin/ds4drv` v0.5.1 (系统级 pip 装)
+## 二、真正的根因：Bonded vs Paired
 
-### 关键陷阱 1: ds4drv 因 evdev 版本不兼容崩溃 (已修复)
+这是整个 saga 最终定位到的关键机制，此前所有失败/困惑都由此解释：
 
-- ds4drv 0.5.1 (2017) 用 python-evdev 旧 API `.fn`, 但系统 evdev 是 **1.9.2**, 新版把 `InputDevice.fn` 改名成 `.path`
-- 崩溃点: `/usr/local/lib/python3.11/dist-packages/ds4drv/actions/input.py` **line 84** `joystick.device.device.fn`
-- 报错: `AttributeError: 'InputDevice' object has no attribute 'fn'. Did you mean: 'fd'?`
-- **修复 (已应用)**: 把该行 `.fn` 改成 `.path` (只是 logger.info 日志语句, 不影响逻辑)
-  - 原文件已备份: `input.py.bak-guagua`
-  - patch 后 ds4drv 正常启动, 立即创建 `/dev/input/js0` + `/dev/input/event2`
+1. **`scan on` 扫不到手柄是正常的**——这台副厂 DS4 不回应 inquiry。但这**不影响连接**：手柄在"快速闪烁"配对模式下会**自己主动发起连接**（page）到鸭子，此时 `bluetoothctl` 会看到设备以 `[NEW]` 形式出现，`connect <MAC>` 直接可用。
+2. **真正决定成败的是 SSP 协商时的 Authentication 标志位（Bonding + MITM）**，不是"用了哪个 agent 工具"：
+   - 如果 host 端 IO Capability Reply 携带 **`MITM required`**：这台手柄的固件会在 IO Capability Response 阶段**卡住不回应**（btmon 看到 host 发完 6.4 秒超时）→ `Simple Pairing Complete: Authentication Failure (0x05)`
+   - 如果 host 端携带 **`No Bonding`**（例如用交互式 `bluetoothctl` 默认 agent，走卖家官方教程 ncnynl 6745 的标准四步 `scan on`→`pair`→`trust`→`connect`）：手柄能顺利回应并完成 SSP，`bluetoothctl info` 显示 **`Paired: yes` 但 `Bonded: no`**——**看起来连上了，但这个配对是临时会话级的，不会写入 `/var/lib/bluetooth` 的持久 link key**
+   - 只有携带 **`General Bonding`**（用 `bt-agent -c NoInputNoOutput` 显式声明 Just Works 能力）才能拿到真正持久化的 `Bonded: yes` + 写入磁盘的 link key
+3. **`bluetoothd` 的 HID input profile 插件会拒绝为非 bonded 设备建立 HIDP 连接**，实测日志实锤：
+   ```
+   profiles/input/device.c:hidp_add_connection() Rejected connection from !bonded device A0:5A:5F:0A:0F:2C
+   ```
+   这就是为什么"卖家官方教程走一遍显示 Connected: yes"，但 `/dev/input/js0` 死活不出现——**能连接 ≠ 能当作 HID 输入设备用**，两者是 bluetoothd 内部两个独立的判定关卡。
 
-### 关键陷阱 2: `pkill -f ds4drv` 自杀
+**结论**：卖家官方文档(ncnynl 6745)的简单四步流程，对"建立蓝牙连接"这个环节是有效的（不需要 NoInputNoOutput 也能连上），但**不足以让手柄真正可用**（拿不到 js0）。必须用 `bt-agent -c NoInputNoOutput` 强制协商出 `General Bonding`，才能同时满足"连接成功"+"bluetoothd 愿意建 HIDP session"两个条件。这是本机型（副厂 DS4）的必需步骤，不是绕远路。
 
-- ssh 执行的命令字符串里含 "ds4drv" 几个字, `pkill -f ds4drv` 匹配**完整命令行**, 会把**正在执行这条命令的 shell 自己杀掉** → 命令在那一行中断
-- 这曾导致多次 ds4drv "启动失败" (实际是命令被自杀截断, 后面没执行到)
-- **禁止用 `pkill -f ds4drv`**; 清进程用精确 unit 名 (`systemctl stop ds4drv-tmp`)
+## 三、标准恢复流程（配对从零开始，含系统重置后）
 
-### 手柄特性 (用户实测, 非标准)
+```bash
+# 0. 清理可能存在的旧配对残留（如果之前配对失败或不确定状态）
+ssh duck "sudo bluetoothctl remove A0:5A:5F:0A:0F:2C"
 
-- **长按 PS 单键 → 白灯双闪配对模式** (⚠️ 本手柄 Share+PS 无反应, 与标准 DS4 相反)
-- 灯色: ds4drv 默认**不设蓝色 LED** → 连上是**白色常亮** (蓝灯需 `--led` 参数)。**灯色不是接管成功的标志**, 以 ds4drv 日志 `Connected to` + `Battery:` 为准
+# 1. 启动 NoInputNoOutput agent（必须用 systemd-run detach，SSH 里普通后台会被 hold 住）
+ssh duck "sudo systemctl stop btagent 2>/dev/null; sudo systemd-run --unit=btagent --collect bt-agent -c NoInputNoOutput"
 
----
+# 2. 手柄操作：Share + PS 同时长按至快速闪烁（配对模式）
 
-## 二、正确启动 + 连接流程
+# 3. 直连（跳过 inquiry，这台手柄扫不到但可以 page 直连）
+ssh duck "sudo hcitool cc A0:5A:5F:0A:0F:2C"
 
-### 启动 ds4drv (systemd-run, 完全 detach)
+# 4. 走标准 pair/trust/connect（此时 agent 是 NoInputNoOutput，会协商出 General Bonding）
+ssh duck 'echo -e "pair A0:5A:5F:0A:0F:2C\ntrust A0:5A:5F:0A:0F:2C\nconnect A0:5A:5F:0A:0F:2C\nexit" | bluetoothctl'
 
-`nohup`/普通后台在 ssh 下会被 hold 住, 用 systemd-run 最可靠:
+# 5. 验证：Bonded 必须是 yes，js0 必须存在
+ssh duck "bluetoothctl info A0:5A:5F:0A:0F:2C | grep -E 'Paired|Bonded|Connected'; ls -la /dev/input/js0"
+# 期望: Paired: yes / Bonded: yes / Connected: yes / js0 存在
 
+# 6. 清理临时 agent（可选，已 bonded 的手柄后续短按 PS 自动回连不需要 agent）
+ssh duck "sudo systemctl stop btagent"
 ```
-sudo systemctl stop ds4drv-tmp 2>/dev/null; sudo systemctl reset-failed ds4drv-tmp 2>/dev/null
-sudo systemd-run --unit=ds4drv-tmp --collect ds4drv
-sleep 3
-systemctl is-active ds4drv-tmp    # active
-ls /dev/input/js0                 # ds4drv 在跑就有
+
+**reboot 持久化**：一旦 `Bonded: yes` 且 link key 已写入 `/var/lib/bluetooth/<adapter_mac>/<controller_mac>/info`，之后每次开机短按 PS 键即可自动回连，js0 自动出现，不需要重复以上流程（除非系统整盘重置）。
+
+## 四、手柄连上之后：如何让呱呱真正响应手柄走路
+
+手柄配对/连接只是"输入设备就绪"，**不代表控制程序在跑**。要让呱呱响应按键，必须手动启动 RL 走路控制进程（除非已部署 `guagua-customizations` 分支的 reboot 自启 systemd unit——见 [duck-workspace-state.md](duck-workspace-state.md)）：
+
+```bash
+ssh duck "sudo systemd-run --unit=duckwalk-test --collect \
+  --uid=raspios --gid=raspios \
+  --working-directory=/home/raspios/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts \
+  -E PYTHONUNBUFFERED=1 -E HOME=/home/raspios \
+  /home/raspios/venv_duck/bin/python3 v2_rl_walk_mujoco.py \
+  --onnx_model_path /home/raspios/open_duck_mini_ws/Open_Duck_Mini/BEST_WALK_ONNX_2.onnx \
+  --duck_config_path /home/raspios/duck_config.json"
 ```
 
-### 连接手柄
+**⚠️ 坑：`sudo systemd-run` 不加 `--uid=raspios --gid=raspios` 会以 root 身份运行**，`HOME` 变成 `/root`，脚本默认 `duck_config_path = ~/duck_config.json` 解析成 `/root/duck_config.json`（不存在），触发"用默认值继续运行？(y/N)"交互式确认 → systemd 无 stdin → `EOFError` 直接崩溃。**必须显式加 `--uid/--gid` 且传 `-E HOME=` 和 `--duck_config_path`**，双保险。
 
-1. ds4drv 跑着 + 蓝牙 controller on (`bluetoothctl power on`)
-2. **长按 PS 键进白灯双闪** (保持别松)
-3. ds4drv 日志依次出现: `Found device A0:5A:5F:0A:0F:2C` → `Connected to Bluetooth Controller` → `Battery: NN%`
-4. 验证 js0 输入: `sudo timeout 6 jstest --event /dev/input/js0` (拨摇杆/按键, 看有无 `type 1`/`type 2` 实时事件; `type 129/130` 是 INIT 快照不算)
+**安全提示**：进程启动后会立即执行舵机初始化序列（低 KP → 摆到 init 姿势 → 高 KP 站稳），**启动前先扶稳/支撑呱呱**，尤其是刚更换过舵机或刚重装系统后的第一次测试。
 
----
+**按键**（vendor 命名，PS4 对应关系）：
+- **✕ (Cross) = "A"：pause/unpause**——进程默认 `start_paused: true`（`duck_config.json`），必须按一次才会响应走路指令，这是安全设计不是 bug
+- □ (Square) = "X"：开关投影仪
+- ○ (Circle) = "B"：随机播放声音
+- △ (Triangle) = "Y"：头部控制开关（实验性，不建议用，可能弄坏脖子）
+- LB：按住加快步频（"冲刺"模式）
+- 左摇杆：走路方向
 
-## 三、当前卡点 (2026-06-07, 待手柄充电后验证)
+## 五、诊断方法论沉淀
 
-**进展**: ds4drv 能连上手柄 (`Connected` + `Battery` 读数), js0 设备完全正确 (jstest 识别 `Sony Computer Entertainment Wireless Controller`, 14 axes + 14 buttons, 正是 vendor 需要的)
-
-**卡点**: 蓝牙信号弱 **14 reports/s** (正常 60+) → 手柄按键**无实时反应** (jstest 只有 INIT 事件)
-
-**已排除的假设** (不要重走):
-- ❌ joydev 缺失 (内核本就无, js0 靠 ds4drv)
-- ❌ uhid 缺失 (`/dev/uhid` 存在, 内核内置)
-- ❌ 按键方式错 (用户一直按 PS 双闪, 正确)
-- ❌ 灯色判断 (白灯=ds4drv默认不设LED, 不代表没接管)
-- ❌ bluetoothd 争用带宽 (disconnect bluetoothd 后 ds4drv 也断 = **共享同一连接**, 非争用)
-
-**真实根因方向**: 蓝牙链路质量问题, 软件解决不了。**旁证**: 手柄电量掉异常快 (75%→62%→50% 几分钟) → 疑**电池老化**, 供电不足导致蓝牙发射弱
-
-**用户决定**: 先把手柄充满电再试蓝牙
-
----
-
-## 四、充电后继续步骤
-
-1. 确认 ds4drv 跑着: `ssh duck "systemctl is-active ds4drv-tmp"` (没跑则用上面 systemd-run 重启)
-2. 长按 PS 双闪, 监控 ds4drv: `ssh duck "sudo journalctl -u ds4drv-tmp --no-pager | tail"` 看 `Connected` + reports/s
-3. 关键看 **reports/s 是否回到正常 (60+)**, 然后采样 js0 看按键有无 `type 1`/`type 2` 实时事件
-4. **若仍 14 reports/s** → 转 USB 有线: micro-USB **数据线**(非纯充电线)插 DS4 到鸭子 → 内核 hid_generic 接管出 hidraw → `ds4drv --hidraw` 读它建 js0 → 稳定 60+/s, 绕过蓝牙
-
----
-
-## 五、⚠️ 持久化提醒 (系统重置会丢这些)
-
-- ds4drv 的 `.fn→.path` patch 在鸭子端文件系统, **系统重置会丢失**
-- 整盘镜像备份 `D:\duck-backup\duck-env-initial-2026-06-07.img.zst` 是**本次 patch 之前**的, **不含此 patch**
-- ds4drv 当前也**没配开机自启** (systemd-run 是临时 transient unit, reboot 后消失)
-- **TODO** (手柄跑通后做): 把以下纳入 `scripts/duck-post-reset-fix.ps1` 或新建 ds4drv systemd service:
-  1. 重施 ds4drv input.py 的 `.fn→.path` patch
-  2. 配 ds4drv 开机自启 (systemd unit, `ds4drv --hidraw` 或蓝牙模式)
-  3. 这样 reboot / 重置后手柄自动可用
+- **蓝牙/HID 连接问题先抓 btmon，不从症状猜假设**：`sudo systemd-run --unit=btmon-cap --collect btmon`，事后 `journalctl -u btmon-cap --no-pager -o cat` 直接看人类可读的 HCI 事件流，重点抓 `IO Capability Request/Response`、`Simple Pairing Complete`、`Auth Complete`
+- **`bluetoothd` 自身日志同样关键**：`sudo journalctl -u bluetooth --no-pager -S '5 min ago'`，本次案例的决定性证据（`Rejected connection from !bonded device`）就是从这里找到的，btmon 只能看到"连接建立成功"，看不到 bluetoothd 应用层为什么拒绝 HID profile
+- **"Connected: yes" 不代表真正可用**：还要看 `Bonded` 字段 + 实际 `/dev/input/js0` 是否存在，两者都要核对

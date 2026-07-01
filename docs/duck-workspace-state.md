@@ -18,6 +18,18 @@
 
 ---
 
+## ⚠️ 当前鸭子实际状态 (2026-07-01 核实, 与下方 §1 baseline 记录不符——务必先看这里)
+
+2026-06-06/07 系统整盘重置后，**只完成了网络层基础设施修复**(WiFi/DNS/NTP/SSH 免密/蓝牙手柄配对)，**guagua-customizations 分支从未重新部署到鸭子上**。2026-07-01 实测确认：
+
+- `~/open_duck_mini_ws/Open_Duck_Mini_Runtime` 检出的是**原厂 `v2` 分支**(`34c60ef antennas test`)，工作区一堆卖家/出厂遗留的未版本控制文件(`?? scripts/duck_config.json` 等)，**不是** `guagua-customizations` 分支
+- 没有任何 `duck`/`mcp`/`xiaozhi` systemd 服务在跑，只有出厂 `commands_web`(5051 网页面板)
+- 手柄蓝牙配对 2026-07-01 已重新走通(见 [duck-ps4-ds4drv-recovery.md](duck-ps4-ds4drv-recovery.md))，走路控制进程需**手动启动**验证通过，见下方 §7
+
+**下次要恢复完整 S0 环境**(reboot 自启 + LLM/MCP 链路 + PS4 热插拔修复等全部 patch)，走 §5 灾难恢复 SOP，从 Gitee `guagua-customizations` 分支重新部署。当前 §1 的 patch 列表/分支记录是**目标状态**，不是**现状**。
+
+---
+
 ## §1. Open_Duck_Mini_Runtime (主要 customization 入口)
 
 ### Remotes
@@ -136,3 +148,26 @@ ssh duck 'cd ~/open_duck_mini_ws/Open_Duck_Mini_Runtime && git reflog show vendo
 - 2026-05-23 19:55 - 朱庆勋 - **Runtime 备份 Gitee 已部署** (从 5/23 早 handoff v1 "deferred GitHub" 改成 Gitee). 两个分支 `vendor-baseline-2026-05-23` (0671b96) + `guagua-customizations` (1e5f7e5) push 到 `gitee.com:sean515/guagua-duck-runtime-vendor` 私有仓库. Gitee API v5 自动化路径 (Bitwarden PAT → 加 SSH key → 创建仓库) 5/1 已沉淀模板, 本次复用. 鸭子端 SSH key id_ed25519_gitee 已加 Gitee (id=5799928). SD 卡损坏现可走 §5 灾难恢复 SOP 从 Gitee 恢复
 - 2026-05-24 - 朱庆勋 - 增 `b7d1529` chore commit (注释耳朵随机动). **未推 Gitee** (主会话控制 push 时机). 任务理解修正: 用户描述"随机动"实际不是 `random_move()` 函数, 而是 PS4 trigger idle 噪声 + 50Hz PWM 写入 SG90 导致的 buzz/微抖动症状. 上游 `debug_antennas_twitch` 分支存在佐证这是已知问题. 注释整个 `if self.duck_config.antennas:` 块 (而非单行) 以彻底消除 50Hz 写 PWM. antennas.py 实现保留, LLM 模式恢复时只需删注释
 - 2026-05-24 - 朱庆勋 - 增 `20916cb` feat commit (PS4 手柄运行时热插拔). **未推 Gitee** (主会话控制 push 时机). 替代 `6f93be8`+`fbb17b7` 早期 stub 方案: 那两 commit 只解决"启动时无手柄不崩溃", 但 RLWalk 进程内手柄热插拔仍需 `systemctl restart`. 本 patch 用 pygame `JOYDEVICEADDED/REMOVED` event 实现真正运行时热插拔. **设计要点**: (1) `PS4Controller.__init__` 不再 raise, lazy init + `_attached` flag 全程管理 (2) `commands_worker` daemon thread 永远跑 (保留 vendor 设计), `_attached=False` 时跳过 read joystick 不污染 queue (3) 主循环每 25 帧 (~0.5s @ 50Hz) pump 一次 event, 远小于人感知阈值 (4) 复用 vendor 已有 `i` 帧计数器, 顶部新加 `import pygame` (vendor 原文件没显式导入). **预验证**: 今天会话用 `scripts/verify_pygame_hotplug.py` v3+v7 双向 verify pygame 2.6.0 + SDL 2.28.4 hotplug 机制工作, 任何时候按 PS 键唤醒 DS4 蓝牙手柄 1-2 秒内事件触发. **DS4 蓝牙限制**: paired MAC `A0:5A:5F:0A:0F:2C`, host 主动 `bluetoothctl connect` 失败 (DS4 固件不允许), 必须设备端按 PS 键发起. 用户场景: 开机不带手柄, 中途按 PS 键唤醒, 现在不再需要 manual restart.
+- 2026-07-01 - 朱庆勋 - 实测确认系统重置后 guagua-customizations **从未重新部署**(见文件顶部⚠️新增段落), Runtime 仍是原厂 v2 分支. PS4 手柄根因复核完成(见 [duck-ps4-ds4drv-recovery.md](duck-ps4-ds4drv-recovery.md)): 真根因是 bonded/non-bonded 差异, 不是"信号弱"也不是"agent 类型". 新增 §7 手动启动 walk 控制流程, 端到端验证 right_knee 舵机更换后走路正常
+
+---
+
+## §7. 应急手动启动 walk 控制 (customizations 未部署/无 reboot 自启时)
+
+当鸭子处于"手柄已配对但没有 systemd 自启服务"的状态（如刚重置后、或还没部署 `guagua-customizations`），用以下命令手动跑通 PS4 控制走路，验证硬件/舵机是否正常：
+
+```bash
+ssh duck "sudo systemd-run --unit=duckwalk-test --collect \
+  --uid=raspios --gid=raspios \
+  --working-directory=/home/raspios/open_duck_mini_ws/Open_Duck_Mini_Runtime/scripts \
+  -E PYTHONUNBUFFERED=1 -E HOME=/home/raspios \
+  /home/raspios/venv_duck/bin/python3 v2_rl_walk_mujoco.py \
+  --onnx_model_path /home/raspios/open_duck_mini_ws/Open_Duck_Mini/BEST_WALK_ONNX_2.onnx \
+  --duck_config_path /home/raspios/duck_config.json"
+```
+
+**关键坑**：`sudo systemd-run` 不显式加 `--uid=raspios --gid=raspios` 会以 **root** 身份跑，`HOME` 变 `/root`，脚本默认 `duck_config_path` 解析成 `/root/duck_config.json`（不存在）→ 触发交互式"用默认值继续?(y/N)"确认 → systemd 无 stdin → `EOFError` 崩溃。必须同时显式传 `--uid/--gid` + `-E HOME=` + `--duck_config_path` 三重保险。
+
+启动后立即执行舵机 init 序列（低 KP→摆init姿势→高KP站稳），**必须先扶稳呱呱再启动**。手柄按 ✕ 解锁(`start_paused: true` 是安全默认)后左摇杆才能控制走路。完整按键映射+调试方法论见 [duck-ps4-ds4drv-recovery.md](duck-ps4-ds4drv-recovery.md) §四/五。
+
+2026-07-01 用此方式验证：right_knee(ID13) 舵机寄修更换后端到端走路正常，用户确认"一切正常"。

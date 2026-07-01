@@ -37,7 +37,7 @@
 | 耳朵舵机 | SG90 | 2 | 头部 |
 | IMU | BNO055 | 1 | 9 轴 |
 | 摄像头 | 树莓派摄像头 | 1 | |
-| 手柄 | **PS4 (DS4) 蓝牙手柄** | 1 | MAC `A0:5A:5F:0A:0F:2C` (2026-06-07 btmon 实锤); **Share+PS 同时长按=快速双闪配对模式** (卖家文档 ncnynl 6745; 旧记"Share+PS无反应"已证伪); ✅ 2026-06-07 已连通+bonded, reboot 后短按 PS 自动回连+js0 真实输入; **不需要 ds4drv** (内核 hid_sony+joydev 直接建 js0); 连通法=NoInputNoOutput agent(Just Works)+hcitool cc 直连 (根因方式待卖家交互式 bluetoothctl 复核); ⚠️ 副厂 DS4(PID 漂移 05C4↔09CC + inquiry 扫不到只能 page); 详见 [duck-ps4-ds4drv-recovery.md](duck-ps4-ds4drv-recovery.md) + handoff-2026-06-07-v8 |
+| 手柄 | **PS4 (DS4) 蓝牙手柄** | 1 | MAC `A0:5A:5F:0A:0F:2C` (btmon 实锤); **Share+PS 同时长按=快速双闪配对模式**(卖家文档 ncnynl 6745); ⚠️ 副厂 DS4(PID 漂移 05C4↔09CC + inquiry scan 扫不到只能 page，手柄配对模式下会自己主动发起连接); **不需要 ds4drv**(内核 hid_sony+joydev 直接建 js0); ✅ 根因已锁定并复核(2026-07-01)：必须用 `bt-agent -c NoInputNoOutput` 协商出 `General Bonding`才能拿到 js0——卖家教程的普通交互式 bluetoothctl 四步也能"连接成功"但只是临时 `Paired:yes/Bonded:no`，bluetoothd 会拒绝为非 bonded 设备建 HIDP(`Rejected connection from !bonded device`)，导致 js0 不出现; bonded 后 reboot 短按 PS 自动回连+js0 真实输入; 详见 [duck-ps4-ds4drv-recovery.md](duck-ps4-ds4drv-recovery.md) |
 | 小智语音模块 | 独立小盒 | 1 | py-xiaozhi 体系 |
 | 头灯 | 按键控制 | 1 | 按一下亮 / 再按灭 |
 | 支撑支架 | 3D 打印 | 1 | |
